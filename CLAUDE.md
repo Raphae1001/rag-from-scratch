@@ -11,7 +11,9 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
   (parfait), citations vérifiées, reranking mitigé (MRR 0,474→0,521 mieux, recall@10 0,720→0,686 moins bien : le
   cross-encoder remonte mieux la 1re bonne réponse mais fait sortir des docs pertinents du top-10). Documenté
   honnêtement dans le README, pas caché.
-- Phases 4 (évaluation), 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
+- Phase 4 (évaluation) : **code en place, gate fidélité NON mesuré** (pas de clé API dans cet environnement).
+  Tableau comparatif repris de la Phase 2 (déjà mesuré), fidélité par juge LLM dans `faithfulness.py`/`scripts/phase4_check.py`.
+- Phases 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
 
 ## Commandes
 ```bash
@@ -21,7 +23,8 @@ python scripts/embed_corpus.py && python scripts/benchmark.py  # embeddings + be
 bash scripts/run_phase2.sh                                     # tout, avec venv
 python scripts/answer.py "une question"                        # Phase 3 : pipeline complet (besoin d'ANTHROPIC_API_KEY)
 python scripts/phase3_check.py                                 # Phase 3 : gates -> results/phase3_report.md
-python -m pytest -q                                            # 112 tests
+python scripts/phase4_check.py                                 # Phase 4 : fidélité -> results/phase4_report.md
+python -m pytest -q                                            # 121 tests
 ```
 
 ## Règles de travail

@@ -66,13 +66,14 @@ def build_context(passages: list[tuple[str, str]]) -> str:
     return "\n\n".join(f"[{label}] {text}" for label, text in passages)
 
 
-def _parse_response(raw: str) -> dict:
-    """Parse le JSON en tête de la réponse, en ignorant tout ce qui suit.
+def extract_json_object(raw: str) -> dict:
+    """Parse le premier objet JSON en tête de la réponse, en ignorant tout ce qui suit.
 
-    En pratique, malgré la consigne « JSON only, no text before or after », le modèle ajoute parfois une
-    explication après l'objet JSON (observé avec Haiku sur le set de non-réponse). `json.loads` rejette
-    toute la chaîne dans ce cas ; `raw_decode` ne lit que le premier objet JSON valide et laisse le reste,
-    ce qui rend le parsing robuste à ce type d'écart mineur sans affaiblir la détection elle-même.
+    En pratique, malgré une consigne « JSON only, no text before or after », le modèle ajoute parfois une
+    explication après l'objet JSON (observé avec Haiku sur le set de non-réponse de la Phase 3).
+    `json.loads` rejette toute la chaîne dans ce cas ; `raw_decode` ne lit que le premier objet JSON
+    valide et laisse le reste, ce qui rend le parsing robuste à ce type d'écart mineur. Réutilisée par
+    `faithfulness.py` (autre appel LLM à sortie JSON, même écart possible).
     """
     text = raw.strip()
     if text.startswith("```"):
@@ -82,6 +83,11 @@ def _parse_response(raw: str) -> dict:
         data, _ = json.JSONDecoder().raw_decode(text)
     except json.JSONDecodeError as e:
         raise ValueError(f"Réponse du modèle non-JSON : {raw!r}") from e
+    return data
+
+
+def _parse_response(raw: str) -> dict:
+    data = extract_json_object(raw)
     if "answerable" not in data:
         raise ValueError(f"Réponse du modèle sans clé 'answerable' : {raw!r}")
     if not isinstance(data["answerable"], bool):

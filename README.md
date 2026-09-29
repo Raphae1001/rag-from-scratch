@@ -10,7 +10,7 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
 pip install -r requirements-dev.txt
-pytest                              # 112 tests (les tests de base utilisent Docker si `pgserver` est absent)
+pytest                              # 121 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
@@ -19,7 +19,7 @@ Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voi
 - [x] Phase 1 — Recherche classique (J1–J4)
 - [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,572 → hybride 0,720)
 - [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
-- [ ] Phase 4 — Évaluation
+- [ ] Phase 4 — Évaluation (code en place, gate fidélité non mesuré — voir section)
 - [ ] Phase 5 — Prod & observabilité
 - [ ] Phase 6 — Fine-tuning contrastif
 
@@ -213,6 +213,35 @@ sur un pool de candidats plus large que 30 pour voir si le recall@10 se maintien
 
 `scripts/phase3_check.py`, lancé avec Postgres + embeddings + `ANTHROPIC_API_KEY`, écrit ces chiffres dans
 `results/phase3_report.{md,json}`.
+
+## Phase 4 — Évaluation rigoureuse
+
+**Ce qui est en place** : mesure de fidélité (faithfulness) par juge LLM (`faithfulness.py`), vérification
+`scripts/phase4_check.py`. Le tableau comparatif des 3 configurations (precision@k/recall@k/MRR) n'est **pas
+recalculé** : il est repris tel quel de `results/phase2_benchmark.json`, déjà mesuré et versionné en Phase 2.
+
+### Design
+- **Fidélité, pas exactitude** : le juge ne compare pas la réponse à une "bonne réponse" attendue — il vérifie
+  seulement que chaque affirmation de la réponse est soutenue par les passages **cités**. Une réponse peut être
+  fidèle (rien d'inventé) sans être complète, et inversement ; la spec demande la fidélité au contexte, pas la
+  justesse de fond.
+- **Second appel LLM indépendant** : plutôt que de comparer des chaînes de caractères (une affirmation vraie
+  peut être une reformulation, pas un extrait mot pour mot), on redemande à Claude de découper la réponse en
+  affirmations et de juger chacune — même pattern JSON structuré que la Phase 3, avec le même parsing tolérant
+  au texte en trop après le JSON (`extract_json_object`, factorisé depuis `generate.py`).
+- **Parallélisation** : comme en Phase 3, le retrieval/reranking reste séquentiel (connexion Postgres partagée),
+  mais les appels de génération puis de jugement sont chacun parallélisés avec un `ThreadPoolExecutor`.
+
+### Lancer
+```bash
+python scripts/phase4_check.py    # -> results/phase4_report.{md,json}
+```
+
+### Gates de la spec — **non mesurés dans cet environnement** (pas de clé API disponible ici)
+- Le set d'évaluation est versionné (`data/eval/queries.json`, 44 requêtes) — déjà vrai depuis la Phase 2
+- Chaque métrique est calculée par un script reproductible — `scripts/benchmark.py` (Phase 2) + `phase4_check.py`
+- Le tableau comparatif final montre clairement la configuration gagnante avec une explication — généré par
+  `phase4_check.py`, voir `results/phase4_report.md` une fois lancé
 
 ## Licences et crédits
 Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir
