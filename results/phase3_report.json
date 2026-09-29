@@ -1,0 +1,94 @@
+{
+  "fake": false,
+  "rerank": {
+    "n": 44,
+    "before": {
+      "recall@10": 0.7196969696969697,
+      "mrr": 0.4744227994227994
+    },
+    "after": {
+      "recall@10": 0.6856060606060607,
+      "mrr": 0.5210858585858587
+    }
+  },
+  "rerank_gate_ok": true,
+  "hallucination": {
+    "n": 12,
+    "hallucinated": 0,
+    "cases": [
+      {
+        "id": "n01",
+        "query": "how do I set up OAuth2 login in a Ruby on Rails application",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n02",
+        "query": "what's the syntax for merging two pandas DataFrames with overlapping column names",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n03",
+        "query": "how do I write a Kubernetes readiness probe in a deployment YAML",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n04",
+        "query": "how does React's useEffect cleanup function work",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n05",
+        "query": "what is the default port MySQL listens on",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n06",
+        "query": "how do I configure rate limiting in Nginx",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n07",
+        "query": "how do I use TensorFlow's GradientTape for custom training loops",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n08",
+        "query": "how do goroutines communicate over channels in Go",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n09",
+        "query": "what is the capital of France",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n10",
+        "query": "how do I configure S3 bucket versioning with the AWS CLI",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n11",
+        "query": "how do I write a recursive CTE in PostgreSQL",
+        "answerable": false,
+        "answer": null
+      },
+      {
+        "id": "n12",
+        "query": "what's the difference between npm and yarn for installing packages",
+        "answerable": false,
+        "answer": null
+      }
+    ]
+  },
+  "hallucination_gate_ok": true
+}
