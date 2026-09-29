@@ -67,12 +67,19 @@ def build_context(passages: list[tuple[str, str]]) -> str:
 
 
 def _parse_response(raw: str) -> dict:
+    """Parse le JSON en tête de la réponse, en ignorant tout ce qui suit.
+
+    En pratique, malgré la consigne « JSON only, no text before or after », le modèle ajoute parfois une
+    explication après l'objet JSON (observé avec Haiku sur le set de non-réponse). `json.loads` rejette
+    toute la chaîne dans ce cas ; `raw_decode` ne lit que le premier objet JSON valide et laisse le reste,
+    ce qui rend le parsing robuste à ce type d'écart mineur sans affaiblir la détection elle-même.
+    """
     text = raw.strip()
     if text.startswith("```"):
         text = text.strip("`")
         text = text.removeprefix("json").strip()
     try:
-        data = json.loads(text)
+        data, _ = json.JSONDecoder().raw_decode(text)
     except json.JSONDecodeError as e:
         raise ValueError(f"Réponse du modèle non-JSON : {raw!r}") from e
     if "answerable" not in data:

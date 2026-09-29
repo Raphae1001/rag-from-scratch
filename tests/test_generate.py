@@ -17,6 +17,14 @@ def test_parse_response_strips_markdown_fence():
     assert _parse_response(raw)["answerable"] is True
 
 
+def test_parse_response_ignores_trailing_prose_after_the_json_object():
+    """Observé en pratique avec Claude Haiku sur le set de non-réponse : le modèle respecte le format JSON
+    mais ajoute une explication après, malgré la consigne "no text before or after"."""
+    raw = ('{"answerable": false}\n\nThe provided passages only cover FastAPI, not Ruby on Rails, '
+           "so I cannot answer this question.")
+    assert _parse_response(raw) == {"answerable": False}
+
+
 def test_parse_response_rejects_non_json():
     with pytest.raises(ValueError, match="non-JSON"):
         _parse_response("sorry, I cannot answer that")
