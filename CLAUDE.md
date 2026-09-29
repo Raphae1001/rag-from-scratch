@@ -33,6 +33,7 @@ score d'un document = meilleur passage · embeddings `all-MiniLM-L6-v2` (384 dim
 HNSW m=16, ef_construction=64, ef_search=40 (créé/supprimé par le benchmark) · corpus : changelogs, pages « méta » et `pydantic/docs/api/` exclus.
 
 ## En attente (avant toute publication)
-1. **Réécrire l'historique git local** avec l'adresse noreply GitHub de Raphael (son e-mail personnel est dans tous les commits) — avant le premier push.
-2. Créer le dépôt GitHub **privé** `rag-from-scratch` (compte `Raphae1001`) et pousser ; passage en public plus tard, à sa demande.
-3. Mesure de latence propre (échauffement + répétitions) : prévue en Phase 5.
+1. ~~Réécrire l'historique git local avec l'adresse noreply GitHub de Raphael~~ — fait : historique réécrit
+   (`89992240+Raphae1001@users.noreply.github.com`), dépôt privé [Raphae1001/rag-from-scratch](https://github.com/Raphae1001/rag-from-scratch)
+   créé et poussé sur `master`. Passage en public plus tard, à sa demande.
+2. Mesure de latence propre (échauffement + répétitions) : prévue en Phase 5.
