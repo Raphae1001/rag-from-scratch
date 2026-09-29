@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8.0
+rank-bm25>=0.2.2               # tests/test_reference_rank_bm25.py
+pgserver                       # optionnel : Postgres+pgvector sans Docker (tests DB, mode --pgdata)

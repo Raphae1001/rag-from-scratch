@@ -1,7 +1,4 @@
-pytest>=8.0
 numpy
 sentence-transformers>=3.0     # embeddings (télécharge torch : ~2 Go ; CPU suffisant)
 psycopg[binary]>=3.1
 pgvector>=0.3
-rank-bm25>=0.2.2               # uniquement pour tests/test_reference_rank_bm25.py
-pgserver                       # OPTIONNEL : Postgres+pgvector sans Docker (tests, mode --pgdata)

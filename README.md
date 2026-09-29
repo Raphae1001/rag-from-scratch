@@ -9,7 +9,7 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 ```bash
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 pytest                              # 93 tests
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
@@ -76,8 +76,12 @@ métriques (`metrics.py`), set annoté de 44 requêtes (`data/eval/queries.json`
 
 ### Lancer (avec le vrai modèle `all-MiniLM-L6-v2`)
 ```bash
-pip install -r requirements.txt
-docker compose up -d                 # Postgres + pgvector sur localhost:5433
+bash scripts/run_phase2.sh           # tout en une commande (venv, tests, Docker, embeddings, benchmark)
+```
+ou pas à pas :
+```bash
+pip install -r requirements-dev.txt
+docker compose up -d --wait          # Postgres + pgvector sur localhost:5433
 python scripts/embed_corpus.py       # ~2500 passages -> table `chunks` (quelques minutes sur CPU)
 python scripts/benchmark.py          # -> results/phase2_benchmark.md et .json
 ```
