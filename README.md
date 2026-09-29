@@ -10,14 +10,14 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
 pip install -r requirements-dev.txt
-pytest                              # 93 tests
+pytest                              # 93 tests (85 + 1 fichier ignoré sans `pgserver`, ex. macOS Python récent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
 
 ## Avancement
 - [x] Phase 1 — Recherche classique (J1–J4)
-- [~] Phase 2 — Recherche dense (code + tests OK ; **benchmark avec le vrai modèle à exécuter**, voir ci-dessous)
+- [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,572 → hybride 0,720)
 - [ ] Phase 3 — Génération + garde-fous
 - [ ] Phase 4 — Évaluation
 - [ ] Phase 5 — Prod & observabilité
@@ -102,12 +102,53 @@ doc. Annotées **sans passer par BM25** (à partir du plan des pages), clés `ch
 (`tests/test_eval_set.py`). C'est un **brouillon à relire** : les annotations peuvent être discutées, et le mélange
 mots-clés / reformulations conditionne l'ampleur du gain mesuré, d'où la ventilation par type dans le benchmark.
 
-### Résultats
-**Mesuré (BM25 seul, ne dépend pas des embeddings)** : recall@10 = **0,572** (mots-clés 0,812 ; reformulations 0,435),
-MRR = 0,333. C'est la barre que la fusion hybride doit dépasser.
+### Résultats (mesurés : `all-MiniLM-L6-v2`, 44 requêtes, 1597 documents, image Docker `pgvector/pgvector:pg16`)
 
-**À mesurer avec le vrai modèle** : recall@10 dense et hybride, et compromis exact / HNSW → coller ici le tableau de
-`results/phase2_benchmark.md`. Gate Phase 2 : recall@10 hybride > BM25 seul. **Non revendiqué tant que non mesuré.**
+| Configuration | recall@10 | recall@5 | precision@10 | MRR | latence moy. |
+|---|---|---|---|---|---|
+| BM25 seul | 0,572 | 0,394 | 0,109 | 0,333 | 0,6 ms |
+| Dense seul | 0,659 | 0,424 | 0,127 | 0,396 | 108,7 ms |
+| **Hybride (RRF)** | **0,720** | **0,481** | **0,139** | **0,474** | 21,0 ms |
+
+recall@10 par type de requête :
+
+| Configuration | mots-clés (n=16) | reformulations (n=28) |
+|---|---|---|
+| BM25 seul | 0,812 | 0,435 |
+| Dense seul | 0,938 | 0,500 |
+| Hybride (RRF) | 0,938 | 0,595 |
+
+**Gate Phase 2 atteint** : recall@10 hybride (0,720) > BM25 seul (0,572), soit +0,148 (+26 % relatif).
+
+Lecture des résultats :
+- Le gain vient surtout des **reformulations** (0,435 → 0,595) : c'est le cas visé (« validate » vs « validation », requêtes
+  sans les mots de la doc). Sur les requêtes **mots-clés**, l'hybride égale le dense (0,938) sans le dépasser.
+- Le dense seul est déjà meilleur que BM25 (0,659) ; la fusion apporte encore +0,061 par-dessus, ce qui justifie de garder les deux.
+- **Latence** : la ligne « dense seul » (108,7 ms) est nettement plus lente que « hybride » (21,0 ms) alors que l'hybride fait
+  aussi une recherche dense. Hypothèse (non vérifiée) : la première requête dense paie le chargement/échauffement du modèle,
+  et les configurations sont mesurées dans l'ordre BM25, dense, hybride. Ces latences sont donc **indicatives** ; une mesure
+  propre demanderait un échauffement préalable et plusieurs répétitions (prévu en Phase 5).
+
+Compromis exactitude / vitesse (recherche approximative HNSW, m=16, ef_construction=64, construction 0,52 s ; 2529 passages) :
+
+| Mode | recall@10 vs exact | latence moy. | p95 |
+|---|---|---|---|
+| exact (sans index) | 1,000 | 3,72 ms | 5,26 ms |
+| HNSW ef_search=10 | 0,941 | 0,64 ms | 0,91 ms |
+| HNSW ef_search=40 | 0,993 | 0,73 ms | 0,90 ms |
+| HNSW ef_search=100 | 0,998 | 0,93 ms | 1,20 ms |
+
+`ef_search=40` (recall 0,993 pour ~5× moins de latence que l'exact) est un bon compromis à cette échelle. À 2500 passages
+l'exact reste utilisable (3,7 ms) : l'index HNSW ne devient nécessaire que pour des corpus bien plus grands.
+
+**Limites de cette mesure** (à garder en tête avant de citer ces chiffres) :
+- **44 requêtes seulement** : l'écart est net mais je n'ai pas calculé d'intervalle de confiance ; un intervalle par bootstrap
+  sur les requêtes est prévu en Phase 4 avec le set complet.
+- **Annotations faites par l'auteur** (et un assistant), à partir du plan des pages et sans regarder les résultats de BM25 ; elles
+  sont discutables, et le set est équilibré à la main entre mots-clés (16) et reformulations (28), ce qui influence l'ampleur du gain.
+- Paramètres non réglés : k=60 pour RRF, 50 candidats par méthode, passages de 120 mots. Aucun réglage n'a été fait sur ce set,
+  donc pas de sur-ajustement, mais aussi pas d'optimisation.
+- Le rapport complet est dans `results/phase2_benchmark.md` et `.json`.
 
 > Les exécutions `--fake` (embeddings factices, sans sémantique) ne servent qu'à tester la plomberie ; leurs
 > résultats sont écrits dans `results/*_FAKE.*` (ignorés par git) et ne doivent jamais être reportés.
