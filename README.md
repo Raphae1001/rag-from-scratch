@@ -10,7 +10,7 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
 pip install -r requirements-dev.txt
-pytest                              # 93 tests (les tests de base utilisent Docker si `pgserver` est absent)
+pytest                              # 112 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
@@ -158,6 +158,42 @@ l'exact reste utilisable (3,4 ms) : l'index HNSW ne devient nécessaire que pour
 
 > Les exécutions `--fake` (embeddings factices, sans sémantique) ne servent qu'à tester la plomberie ; leurs
 > résultats sont écrits dans `results/*_FAKE.*` (ignorés par git) et ne doivent jamais être reportés.
+
+## Phase 3 — Génération avec garde-fous
+
+**Ce qui est en place** : reranking par cross-encoder (`rerank.py`), génération sourcée via l'API Claude
+(`generate.py`), pipeline complet `scripts/answer.py`, vérification des gates `scripts/phase3_check.py`,
+set de 12 requêtes hors-corpus (`data/eval/no_answer.json`).
+
+### Design
+- **LLM** : API Claude (`claude-haiku-4-5-20251001`), clé lue depuis `$ANTHROPIC_API_KEY` (jamais dans le code).
+- **Reranking** : `cross-encoder/ms-marco-MiniLM-L-6-v2` (sentence-transformers, local, pas d'appel API) sur les
+  candidats du retrieval hybride, avant génération.
+- **Garde-fou anti-hallucination** : le modèle reçoit les passages étiquetés `[S1]`, `[S2]`, ... et doit répondre
+  en **JSON strict** — `{"answerable": false}` si le contexte ne suffit pas, sinon
+  `{"answerable": true, "answer": "...", "sources": ["S1", "S3"]}`. Passer par un format structuré plutôt que de
+  chercher « je ne sais pas » dans du texte libre rend la détection déterministe : pas de risque qu'une réponse
+  hallucinée commence par une formule de politesse qui échapperait à un test de correspondance de texte.
+- **Citations** : le modèle ne voit jamais les vraies clés `chemin#section` (seulement `S1`, `S2`...) — elles
+  sont réinjectées après coup par `generate_answer`, pour éviter qu'il invente une clé plausible mais fausse.
+  Un label cité qui ne correspond à aucun passage fourni est silencieusement ignoré plutôt que de planter.
+- **Testabilité sans réseau** : `LLMClient`/`Reranker` sont des `Protocol` (même pattern que `Embedder` en
+  Phase 2) — `FakeLLMClient` et `OverlapReranker` permettent de tester toute la logique de parsing, de mapping
+  des citations et de tri sans appeler l'API ni télécharger de modèle (`tests/test_generate.py`, `tests/test_rerank.py`).
+
+### Lancer
+```bash
+python scripts/answer.py "how do I upload a file to the server"    # une question
+python scripts/phase3_check.py                                     # gates -> results/phase3_report.{md,json}
+```
+
+### Gates de la spec — **non mesurés dans cet environnement** (pas de Docker ni de clé API disponibles ici)
+- 0 réponse hallucinée sur le set de non-réponse (12 requêtes hors du domaine FastAPI/Starlette/Pydantic)
+- Chaque réponse cite explicitement ses sources
+- Le reranking améliore mesurablement recall@10/MRR par rapport au retrieval hybride seul
+
+`scripts/phase3_check.py`, une fois lancé avec Postgres + embeddings + `ANTHROPIC_API_KEY`, écrit ces chiffres
+dans `results/phase3_report.md`. Tant que ce rapport n'existe pas, considérer le gate Phase 3 **comme non atteint**.
 
 ## Licences et crédits
 Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir

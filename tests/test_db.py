@@ -167,6 +167,21 @@ def test_exact_search_mode_bypasses_the_index(conn):
     conn.execute("SET enable_seqscan = on")
 
 
+def test_get_docs_returns_path_section_text_by_doc_id(conn):
+    load(conn, DOCS)
+    docs = db.get_docs(conn, [2, 0])
+    assert set(docs) == {0, 2}
+    assert docs[2]["path"] == "t/p2.md"
+    assert docs[2]["section"] == "Files"
+    assert "UploadFile" in docs[2]["text"]
+    assert docs[0]["section"] == "Errors"
+
+
+def test_get_docs_empty_list_returns_empty_dict(conn):
+    load(conn, DOCS)
+    assert db.get_docs(conn, []) == {}
+
+
 def test_hybrid_search_combines_both_rankings(conn):
     load(conn, DOCS)
     index = build_index([d["text"] for d in DOCS])

@@ -1,0 +1,14 @@
+[
+  {"id": "n01", "query": "how do I set up OAuth2 login in a Ruby on Rails application"},
+  {"id": "n02", "query": "what's the syntax for merging two pandas DataFrames with overlapping column names"},
+  {"id": "n03", "query": "how do I write a Kubernetes readiness probe in a deployment YAML"},
+  {"id": "n04", "query": "how does React's useEffect cleanup function work"},
+  {"id": "n05", "query": "what is the default port MySQL listens on"},
+  {"id": "n06", "query": "how do I configure rate limiting in Nginx"},
+  {"id": "n07", "query": "how do I use TensorFlow's GradientTape for custom training loops"},
+  {"id": "n08", "query": "how do goroutines communicate over channels in Go"},
+  {"id": "n09", "query": "what is the capital of France"},
+  {"id": "n10", "query": "how do I configure S3 bucket versioning with the AWS CLI"},
+  {"id": "n11", "query": "how do I write a recursive CTE in PostgreSQL"},
+  {"id": "n12", "query": "what's the difference between npm and yarn for installing packages"}
+]
