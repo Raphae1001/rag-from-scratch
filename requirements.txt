@@ -1,4 +1,5 @@
 numpy
-sentence-transformers>=3.0     # embeddings (télécharge torch : ~2 Go ; CPU suffisant)
+sentence-transformers>=3.0     # embeddings + reranking cross-encoder (télécharge torch : ~2 Go ; CPU suffisant)
 psycopg[binary]>=3.1
 pgvector>=0.3
+anthropic>=0.40                # génération (Phase 3), clé lue depuis $ANTHROPIC_API_KEY

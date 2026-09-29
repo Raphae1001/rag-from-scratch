@@ -7,7 +7,9 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
 ## État
 - Phase 1 (BM25 from scratch) : **terminée**. Phase 2 (dense pgvector + fusion RRF) : **terminée**, gate atteint et mesuré
   (recall@10 hybride 0,720 > BM25 0,572, 44 requêtes, `results/phase2_benchmark.md`).
-- Phase 3 (génération + garde-fous) : **à faire**. Fournisseur du LLM non choisi (recommandé : API Claude, clé dans `.env`, jamais dans le code).
+- Phase 3 (génération + garde-fous) : **code + tests en place, gate NON mesuré** (pas de Docker/clé API dans cet environnement).
+  LLM : API Claude `claude-haiku-4-5-20251001`, clé dans `.env`. Reranking cross-encoder local. Voir `scripts/phase3_check.py`
+  et section Phase 3 du README avant de déclarer le gate atteint.
 - Phases 4 (évaluation), 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
 
 ## Commandes
@@ -16,7 +18,9 @@ bash scripts/fetch_docs.sh && python scripts/build_corpus.py   # corpus (commits
 docker compose up -d --wait                                    # Postgres 16 + pgvector, localhost:5433
 python scripts/embed_corpus.py && python scripts/benchmark.py  # embeddings + benchmark Phase 2
 bash scripts/run_phase2.sh                                     # tout, avec venv
-python -m pytest -q                                            # 93 tests
+python scripts/answer.py "une question"                        # Phase 3 : pipeline complet (besoin d'ANTHROPIC_API_KEY)
+python scripts/phase3_check.py                                 # Phase 3 : gates -> results/phase3_report.md
+python -m pytest -q                                            # 112 tests
 ```
 
 ## Règles de travail

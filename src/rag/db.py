@@ -40,6 +40,14 @@ def load_corpus(conn, docs: list[dict], chunks: list[tuple[int, int, str, np.nda
         )
 
 
+def get_docs(conn, doc_ids: list[int]) -> dict[int, dict]:
+    """doc_id -> {"path", "section", "text"} pour les documents demandés (reranking, génération)."""
+    if not doc_ids:
+        return {}
+    rows = conn.execute("SELECT doc_id, path, section, text FROM docs WHERE doc_id = ANY(%s)", (doc_ids,)).fetchall()
+    return {doc_id: {"path": path, "section": section, "text": text} for doc_id, path, section, text in rows}
+
+
 def counts(conn) -> tuple[int, int]:
     return (conn.execute("SELECT count(*) FROM docs").fetchone()[0],
             conn.execute("SELECT count(*) FROM chunks").fetchone()[0])
