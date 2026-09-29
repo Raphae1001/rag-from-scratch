@@ -36,10 +36,10 @@ if [ "${NO_DOCKER:-0}" != "1" ]; then
 fi
 
 echo ">> 5/6 embeddings (le modèle se télécharge au premier lancement)"
-python scripts/embed_corpus.py "${DB_ARGS[@]}"
+python scripts/embed_corpus.py ${DB_ARGS[@]+"${DB_ARGS[@]}"}
 
 echo ">> 6/6 benchmark"
-python scripts/benchmark.py "${DB_ARGS[@]}"
+python scripts/benchmark.py ${DB_ARGS[@]+"${DB_ARGS[@]}"}
 
 echo
 echo "=== TERMINÉ : résultats dans results/phase2_benchmark.md (colle-le dans la conversation) ==="
