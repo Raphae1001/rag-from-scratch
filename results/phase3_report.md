@@ -4,8 +4,8 @@
 
 | | recall@10 | MRR |
 |---|---|---|
-| Hybride seul | 0.720 | 0.474 |
-| Hybride + reranking | 0.686 | 0.521 |
+| Hybride seul | 0.739 | 0.508 |
+| Hybride + reranking | 0.705 | 0.556 |
 
 **Gate reranking** — amélioration mesurée : **OK**
 
