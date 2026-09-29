@@ -10,11 +10,11 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
-from _common import ROOT, add_db_args, doc_key, get_dsn, load_corpus
+from _common import ROOT, add_db_args, doc_key, get_dsn, load_corpus, safe_generate_answer
 
 from rag import db
 from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
-from rag.generate import AnthropicClient, generate_answer
+from rag.generate import AnthropicClient
 from rag.index import build_index
 from rag.metrics import recall_at_k, reciprocal_rank
 from rag.rerank import CrossEncoderReranker, OverlapReranker
@@ -65,11 +65,13 @@ def hallucination_gate(docs, index, conn, embedder, reranker, client, k: int = 5
         prepared.append((q, passages))
 
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        outs = list(pool.map(lambda qp: generate_answer(client, qp[0]["query"], qp[1]), prepared))
-    results = [{"id": q["id"], "query": q["query"], "answerable": out["answerable"], "answer": out["answer"]}
+        outs = list(pool.map(lambda qp: safe_generate_answer(client, qp[0]["query"], qp[1]), prepared))
+    results = [{"id": q["id"], "query": q["query"], "answerable": out["answerable"], "answer": out["answer"],
+                **({"error": out["error"]} if "error" in out else {})}
                for (q, _), out in zip(prepared, outs)]
-    hallucinated = [r for r in results if r["answerable"]]
-    return {"n": len(results), "hallucinated": len(hallucinated), "cases": results}
+    hallucinated = [r for r in results if r["answerable"] is True]
+    errors = [r for r in results if "error" in r]
+    return {"n": len(results), "hallucinated": len(hallucinated), "errors": len(errors), "cases": results}
 
 
 def main():
@@ -102,7 +104,7 @@ def main():
     t0 = time.perf_counter()
     if args.fake:
         warn = "\n> ⚠️ PLOMBERIE FACTICE (--fake) : pas de génération réelle, ces chiffres ne mesurent rien. Ne pas les reporter.\n"
-        hallu_result = {"n": 0, "hallucinated": 0, "cases": [], "skipped": True}
+        hallu_result = {"n": 0, "hallucinated": 0, "errors": 0, "cases": [], "skipped": True}
     else:
         client = AnthropicClient()
         hallu_result = hallucination_gate(docs, index, conn, embedder, reranker, client)
@@ -122,8 +124,9 @@ def main():
     if args.fake:
         md.append("_(sautée en mode --fake, nécessite un vrai appel à l'API Claude)_")
     else:
-        md.append(f"{hallu_result['n'] - hallu_result['hallucinated']}/{hallu_result['n']} cas correctement identifiés comme "
-                   "« je ne sais pas ».")
+        n_correct = hallu_result['n'] - hallu_result['hallucinated'] - hallu_result['errors']
+        errors_note = f", {hallu_result['errors']} en erreur de format (exclus)" if hallu_result['errors'] else ""
+        md.append(f"{n_correct}/{hallu_result['n']} cas correctement identifiés comme « je ne sais pas »{errors_note}.")
         md += ["", "| id | requête | answerable (doit être false) |", "|---|---|---|"]
         md += [f"| {c['id']} | {c['query']} | {c['answerable']} |" for c in hallu_result["cases"]]
     md += ["", f"**Gate non-hallucination** — 0/{len(NO_ANSWER)} halluciné : **{'OK' if hallu_ok else 'NON ATTEINT'}**"]

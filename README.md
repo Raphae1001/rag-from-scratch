@@ -19,7 +19,7 @@ Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voi
 - [x] Phase 1 — Recherche classique (J1–J4)
 - [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,572 → hybride 0,720)
 - [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
-- [ ] Phase 4 — Évaluation (code en place, gate fidélité non mesuré — voir section)
+- [x] Phase 4 — Évaluation (fidélité 0,964 sur 41/44 réponses, tableau comparatif final — voir section)
 - [ ] Phase 5 — Prod & observabilité
 - [ ] Phase 6 — Fine-tuning contrastif
 
@@ -237,11 +237,42 @@ recalculé** : il est repris tel quel de `results/phase2_benchmark.json`, déjà
 python scripts/phase4_check.py    # -> results/phase4_report.{md,json}
 ```
 
-### Gates de la spec — **non mesurés dans cet environnement** (pas de clé API disponible ici)
+### Résultats (mesurés : `claude-haiku-4-5-20251001` juge, pipeline Phase 3 complet, 44 requêtes annotées)
+
+**Tableau comparatif final** (repris de la Phase 2) :
+
+| Configuration | recall@10 | recall@5 | precision@10 | MRR |
+|---|---|---|---|---|
+| BM25 seul | 0,572 | 0,394 | 0,109 | 0,333 |
+| Dense seul | 0,659 | 0,424 | 0,127 | 0,396 |
+| **Hybride (RRF)** | **0,720** | **0,481** | **0,139** | **0,474** |
+
+**Configuration gagnante : hybride (RRF)** — recall@10 supérieur de +0,148 à BM25 seul, sans coût de latence
+supplémentaire notable par rapport au dense seul.
+
+**Fidélité (faithfulness)** : sur les 44 requêtes, **41 répondables, 3 correctement refusées, 0 erreur de
+format** (le prompt a été retravaillé en cours de route — voir "Limites" ci-dessous). Score de fidélité moyen
+sur les 41 réponses : **0,964** — 13 affirmations sur environ 360 jugées non soutenues par le contexte cité.
+Détail dans `results/phase4_report.md`.
+
+**Limite honnête sur cette mesure** : je n'ai pas relu à la main les 13 affirmations flaggées par le juge. En
+survolant la liste, plusieurs ressemblent à des reformulations correctes plutôt qu'à de vraies inventions (le
+juge LLM applique un standard strict — « soutenu » exige que le contexte le dise explicitement, pas seulement
+que ce soit vrai). Le score de 0,964 est donc probablement une **borne basse** de la vraie fidélité, pas une
+mesure parfaitement calibrée. Une vraie calibration demanderait de faire annoter un échantillon à la main et
+de comparer — hors scope ici.
+
+**Bug rencontré en cours de mesure** : sur la requête `"field validator"` (style mot-clé, très courte), Claude
+a répondu par une question de clarification en texte libre au lieu du JSON attendu, faisant planter le script.
+Corrigé en deux temps : le prompt système précise maintenant explicitement que ces requêtes sont des recherches
+documentaires, pas des questions conversationnelles ambiguës (`SYSTEM_PROMPT` dans `generate.py`) ; et
+`_common.py::safe_generate_answer` rend les scripts de mesure résilients à un cas isolé mal formé (compté à
+part, jamais confondu avec un refus correct ou une hallucination). Après ce correctif : 0/44 erreurs de format.
+
+### Gates de la spec
 - Le set d'évaluation est versionné (`data/eval/queries.json`, 44 requêtes) — déjà vrai depuis la Phase 2
 - Chaque métrique est calculée par un script reproductible — `scripts/benchmark.py` (Phase 2) + `phase4_check.py`
-- Le tableau comparatif final montre clairement la configuration gagnante avec une explication — généré par
-  `phase4_check.py`, voir `results/phase4_report.md` une fois lancé
+- Le tableau comparatif final montre clairement la configuration gagnante avec une explication — ci-dessus
 
 ## Licences et crédits
 Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir

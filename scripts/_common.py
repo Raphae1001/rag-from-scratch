@@ -32,3 +32,15 @@ def get_dsn(args) -> str | None:
         import pgserver
         return pgserver.get_server(args.pgdata, cleanup_mode="stop").get_uri()
     return args.dsn
+
+
+def safe_generate_answer(client, query: str, passages: list[tuple[str, str]]) -> dict:
+    """Comme rag.generate.generate_answer, mais ne lève jamais : une réponse mal formée (ex. le modèle pose
+    une question de clarification en texte libre au lieu de répondre en JSON, observé en pratique sur une
+    requête courte style mot-clé) devient un cas "error" isolé plutôt que de faire planter toute une mesure
+    par lots (phase3_check.py, phase4_check.py) sur une seule requête problématique."""
+    from rag.generate import generate_answer
+    try:
+        return generate_answer(client, query, passages)
+    except ValueError as e:
+        return {"answerable": None, "answer": None, "citations": [], "error": str(e)}
