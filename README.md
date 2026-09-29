@@ -90,6 +90,8 @@ Postgres de `docker compose` dans une **base dédiée** `rag_test_pytest`, cré�
 toute autre base, donc les embeddings de la base `rag` ne sont jamais touchés.
 
 Sans Docker (dev) : ajouter `--pgdata data/pgdata` aux deux scripts (Postgres+pgvector local via le paquet pip `pgserver`).
+**`pgserver` ne publie pas de wheel pour Python ≥ 3.13** (vérifié sur PyPI, builds jusqu'à 3.12 seulement) : sur
+Python 3.13+, `pip` l'ignore silencieusement (`requirements-dev.txt`) et seul Docker reste disponible.
 
 ### Choix de conception
 - **Passages de 120 mots (chevauchement 20)** : le modèle tronque à 256 word pieces et ~25 % des sections dépassent
