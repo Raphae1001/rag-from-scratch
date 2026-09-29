@@ -7,9 +7,10 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
 ## État
 - Phase 1 (BM25 from scratch) : **terminée**. Phase 2 (dense pgvector + fusion RRF) : **terminée**, gate atteint et mesuré
   (recall@10 hybride 0,720 > BM25 0,572, 44 requêtes, `results/phase2_benchmark.md`).
-- Phase 3 (génération + garde-fous) : **code + tests en place, gate NON mesuré** (pas de Docker/clé API dans cet environnement).
-  LLM : API Claude `claude-haiku-4-5-20251001`, clé dans `.env`. Reranking cross-encoder local. Voir `scripts/phase3_check.py`
-  et section Phase 3 du README avant de déclarer le gate atteint.
+- Phase 3 (génération + garde-fous) : **terminée**, gates mesurés (`results/phase3_report.md`) — 0/12 hallucination
+  (parfait), citations vérifiées, reranking mitigé (MRR 0,474→0,521 mieux, recall@10 0,720→0,686 moins bien : le
+  cross-encoder remonte mieux la 1re bonne réponse mais fait sortir des docs pertinents du top-10). Documenté
+  honnêtement dans le README, pas caché.
 - Phases 4 (évaluation), 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
 
 ## Commandes

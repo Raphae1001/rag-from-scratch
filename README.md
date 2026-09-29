@@ -18,7 +18,7 @@ Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voi
 ## Avancement
 - [x] Phase 1 — Recherche classique (J1–J4)
 - [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,572 → hybride 0,720)
-- [ ] Phase 3 — Génération + garde-fous
+- [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
 - [ ] Phase 4 — Évaluation
 - [ ] Phase 5 — Prod & observabilité
 - [ ] Phase 6 — Fine-tuning contrastif
@@ -187,13 +187,32 @@ python scripts/answer.py "how do I upload a file to the server"    # une questio
 python scripts/phase3_check.py                                     # gates -> results/phase3_report.{md,json}
 ```
 
-### Gates de la spec — **non mesurés dans cet environnement** (pas de Docker ni de clé API disponibles ici)
-- 0 réponse hallucinée sur le set de non-réponse (12 requêtes hors du domaine FastAPI/Starlette/Pydantic)
-- Chaque réponse cite explicitement ses sources
-- Le reranking améliore mesurablement recall@10/MRR par rapport au retrieval hybride seul
+### Résultats (mesurés : `claude-haiku-4-5-20251001`, `cross-encoder/ms-marco-MiniLM-L-6-v2`, `all-MiniLM-L6-v2`)
 
-`scripts/phase3_check.py`, une fois lancé avec Postgres + embeddings + `ANTHROPIC_API_KEY`, écrit ces chiffres
-dans `results/phase3_report.md`. Tant que ce rapport n'existe pas, considérer le gate Phase 3 **comme non atteint**.
+**Gate non-hallucination — atteint** : 12/12 requêtes du set de non-réponse (hors du domaine FastAPI/Starlette/
+Pydantic — OAuth2 Rails, pandas, Kubernetes, React, Go, « capitale de la France », etc.) correctement identifiées
+comme non-répondables, 0 hallucination. Détail dans `results/phase3_report.md`.
+
+**Citations — vérifiées** : chaque réponse répondable cite ses sources réelles (`chemin#section`), par ex. pour
+« how do I upload a file to the server » : 5 sources dans `fastapi/tutorial/request-files.md` et
+`fastapi/reference/uploadfile.md`, cohérentes avec le contenu de la réponse.
+
+**Gate reranking — atteint, mais résultat mitigé** (44 requêtes annotées, candidats = 30) :
+
+| | recall@10 | MRR |
+|---|---|---|
+| Hybride seul | 0,720 | 0,474 |
+| Hybride + reranking | 0,686 | 0,521 |
+
+Le reranking **améliore le MRR** (+0,047 : le premier résultat pertinent remonte davantage) mais **dégrade le
+recall@10** (−0,034 : certains documents pertinents sortent du top-10 après reranking). Le script accepte le
+gate si recall@10 **ou** MRR s'améliore (la spec demande une amélioration mesurée, sans préciser laquelle des
+deux métriques) — je le documente ici sans l'enjoliver : le cross-encoder est meilleur pour remonter *la*
+bonne réponse en position 1, pas pour préserver toute la couverture du top-10. Une piste non explorée : reranker
+sur un pool de candidats plus large que 30 pour voir si le recall@10 se maintient mieux.
+
+`scripts/phase3_check.py`, lancé avec Postgres + embeddings + `ANTHROPIC_API_KEY`, écrit ces chiffres dans
+`results/phase3_report.{md,json}`.
 
 ## Licences et crédits
 Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir
