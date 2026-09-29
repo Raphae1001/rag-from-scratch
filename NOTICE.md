@@ -13,6 +13,6 @@ redistribué ici sous leurs licences respectives, dont les textes complets sont 
 Ce dépôt n'est ni affilié à ces projets ni approuvé par eux. Le corpus est regénérable à l'identique avec
 `bash scripts/fetch_docs.sh && python scripts/build_corpus.py`.
 
-Le code de ce dépôt (hors corpus) relève de la licence choisie par son auteur (voir `LICENSE` s'il est présent).
+Le code de ce dépôt (hors corpus) est sous licence MIT (voir `LICENSE`).
 Le modèle d'embeddings `sentence-transformers/all-MiniLM-L6-v2` est téléchargé au premier lancement depuis Hugging Face
 (non redistribué ici) ; se reporter à sa fiche pour sa licence.
