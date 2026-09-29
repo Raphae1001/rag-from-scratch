@@ -159,5 +159,9 @@ l'exact reste utilisable (3,4 ms) : l'index HNSW ne devient nécessaire que pour
 > Les exécutions `--fake` (embeddings factices, sans sémantique) ne servent qu'à tester la plomberie ; leurs
 > résultats sont écrits dans `results/*_FAKE.*` (ignorés par git) et ne doivent jamais être reportés.
 
+## Licences et crédits
+Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir
+[`NOTICE.md`](NOTICE.md) et `third_party_licenses/`. Ce projet n'est pas affilié à ces projets.
+
 ## Limites connues
 Pas de scale, pas d'agents (hors scope assumé).
