@@ -15,12 +15,12 @@ import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from _common import ROOT, add_db_args, get_dsn, load_corpus
+from _common import ROOT, add_db_args, get_dsn, load_corpus, safe_generate_answer
 
 from rag import db
 from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
 from rag.faithfulness import judge_faithfulness
-from rag.generate import AnthropicClient, generate_answer
+from rag.generate import AnthropicClient
 from rag.index import build_index
 from rag.rerank import CrossEncoderReranker, OverlapReranker
 from rag.retrieval import search_hybrid
@@ -36,32 +36,46 @@ def retrieve_and_rerank(query: str, index, conn, embedder, reranker, k: int = 5,
     return [(f"{texts[d]['path']}#{texts[d]['section']}", texts[d]["text"]) for d, _ in reranked]
 
 
+def _safe_judge(client, answer: str, passages: list[tuple[str, str]]) -> dict:
+    try:
+        return judge_faithfulness(client, answer, passages)
+    except ValueError as e:
+        return {"score": None, "claims": [], "error": str(e)}
+
+
 def faithfulness_gate(index, conn, embedder, reranker, client, queries, max_workers: int = 6) -> dict:
     prepared = [(q, retrieve_and_rerank(q["query"], index, conn, embedder, reranker)) for q in queries]
 
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        answers = list(pool.map(lambda qp: generate_answer(client, qp[0]["query"], qp[1]), prepared))
+        answers = list(pool.map(lambda qp: safe_generate_answer(client, qp[0]["query"], qp[1]), prepared))
 
-    # seules les réponses "answerable" ont des affirmations à juger ; on ne juge que sur les passages CITÉS
+    # seules les réponses answerable=True (explicitement, pas None) ont des affirmations à juger,
+    # et seulement sur les passages CITÉS
     judgeable = [(q, ans, [(key, text) for key, text in passages if key in ans["citations"]])
-                 for (q, passages), ans in zip(prepared, answers) if ans["answerable"]]
+                 for (q, passages), ans in zip(prepared, answers) if ans["answerable"] is True]
 
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        judgments = list(pool.map(lambda qac: judge_faithfulness(client, qac[1]["answer"], qac[2]), judgeable))
+        judgments = list(pool.map(lambda qac: _safe_judge(client, qac[1]["answer"], qac[2]), judgeable))
 
     cases = []
     for (q, passages), ans in zip(prepared, answers):
         case = {"id": q["id"], "query": q["query"], "answerable": ans["answerable"], "citations": ans["citations"]}
+        if "error" in ans:
+            case["error"] = ans["error"]
         cases.append(case)
     for (q, ans, _), judgment in zip(judgeable, judgments):
         case = next(c for c in cases if c["id"] == q["id"])
-        case["faithfulness"] = judgment["score"]
-        case["claims"] = judgment["claims"]
+        if judgment["score"] is not None:
+            case["faithfulness"] = judgment["score"]
+            case["claims"] = judgment["claims"]
+        else:
+            case["judge_error"] = judgment["error"]
 
-    unanswered = [c for c in cases if not c["answerable"]]
+    errors = [c for c in cases if "error" in c]
+    unanswered = [c for c in cases if c["answerable"] is False]
     scores = [c["faithfulness"] for c in cases if "faithfulness" in c]
     mean_score = sum(scores) / len(scores) if scores else None
-    return {"n": len(cases), "n_answerable": len(scores), "n_refused": len(unanswered),
+    return {"n": len(cases), "n_answerable": len(scores), "n_refused": len(unanswered), "n_errors": len(errors),
             "mean_faithfulness": mean_score, "cases": cases}
 
 
@@ -113,9 +127,13 @@ def main():
     if args.fake:
         md.append("_(sautée en mode --fake, nécessite un vrai appel à l'API Claude)_")
     else:
-        md.append(f"{faith['n_answerable']}/{faith['n']} requêtes répondables (le reste correctement refusé), "
-                   f"score de fidélité moyen : **{faith['mean_faithfulness']:.3f}** "
+        md.append(f"{faith['n_answerable']}/{faith['n']} requêtes répondables, {faith['n_refused']} refusées, "
+                   f"{faith['n_errors']} en erreur de format (réponse non-JSON, exclues de la mesure). "
+                   f"Score de fidélité moyen sur les répondables : **{faith['mean_faithfulness']:.3f}** "
                    f"(part des affirmations soutenues par les passages cités, jugée par un second appel LLM).")
+        if faith["n_errors"]:
+            md += ["", "Requêtes en erreur de format (le modèle n'a pas respecté le contrat JSON) :", ""]
+            md += [f"- `{c['id']}` ({c['query']!r}) : {c['error'][:150]}" for c in faith["cases"] if "error" in c]
         unsupported = [(c["id"], cl["claim"]) for c in faith["cases"] if "claims" in c
                        for cl in c["claims"] if not cl["supported"]]
         if unsupported:

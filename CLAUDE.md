@@ -11,8 +11,9 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
   (parfait), citations vérifiées, reranking mitigé (MRR 0,474→0,521 mieux, recall@10 0,720→0,686 moins bien : le
   cross-encoder remonte mieux la 1re bonne réponse mais fait sortir des docs pertinents du top-10). Documenté
   honnêtement dans le README, pas caché.
-- Phase 4 (évaluation) : **code en place, gate fidélité NON mesuré** (pas de clé API dans cet environnement).
-  Tableau comparatif repris de la Phase 2 (déjà mesuré), fidélité par juge LLM dans `faithfulness.py`/`scripts/phase4_check.py`.
+- Phase 4 (évaluation) : **terminée**, mesuré (`results/phase4_report.md`) — 41/44 répondables, fidélité 0,964
+  (borne basse honnête, juge LLM non calibré à la main), 0 erreur de format après correction du prompt sur les
+  requêtes courtes style mot-clé (voir README, section Phase 4, "bug rencontré").
 - Phases 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
 
 ## Commandes
