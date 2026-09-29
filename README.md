@@ -10,7 +10,7 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
 pip install -r requirements-dev.txt
-pytest                              # 93 tests (85 + 1 fichier ignoré sans `pgserver`, ex. macOS Python récent)
+pytest                              # 93 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
@@ -85,6 +85,10 @@ docker compose up -d --wait          # Postgres + pgvector sur localhost:5433
 python scripts/embed_corpus.py       # ~2500 passages -> table `chunks` (quelques minutes sur CPU)
 python scripts/benchmark.py          # -> results/phase2_benchmark.md et .json
 ```
+Tests de base de données (`tests/test_db.py`) : ils utilisent `pgserver` (Postgres jetable, paquet pip) s'il est installé, sinon le
+Postgres de `docker compose` dans une **base dédiée** `rag_test_pytest`, créée puis supprimée ; un garde-fou refuse de vider
+toute autre base, donc les embeddings de la base `rag` ne sont jamais touchés.
+
 Sans Docker (dev) : ajouter `--pgdata data/pgdata` aux deux scripts (Postgres+pgvector local via le paquet pip `pgserver`).
 
 ### Choix de conception

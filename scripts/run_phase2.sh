@@ -19,7 +19,11 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -q --upgrade pip
 pip install -q -r requirements.txt pytest rank-bm25
-pip install -q pgserver || echo "   (pgserver indisponible : les tests sur base réelle seront ignorés)"
+# pgserver est OPTIONNEL (Postgres jetable pour les tests) : s'il n'existe pas pour cette machine, les tests de base
+# utilisent le Postgres de Docker dans une base dédiée. On masque donc l'erreur de pip, qui n'en est pas une ici.
+if ! pip install -q pgserver >/dev/null 2>&1; then
+  echo "   (pgserver indisponible sur cette machine : optionnel, les tests de base utiliseront le Postgres de Docker)"
+fi
 
 echo ">> 2/6 corpus"
 if [ ! -f data/corpus.jsonl ]; then
@@ -27,13 +31,13 @@ if [ ! -f data/corpus.jsonl ]; then
   python scripts/build_corpus.py
 fi
 
-echo ">> 3/6 tests"
-python -m pytest -q
-
-echo ">> 4/6 Postgres + pgvector"
+echo ">> 3/6 Postgres + pgvector"
 if [ "${NO_DOCKER:-0}" != "1" ]; then
   docker compose up -d --wait
 fi
+
+echo ">> 4/6 tests (base dédiée rag_test_pytest : tes données ne sont pas touchées)"
+python -m pytest -q
 
 echo ">> 5/6 embeddings (le modèle se télécharge au premier lancement)"
 python scripts/embed_corpus.py ${DB_ARGS[@]+"${DB_ARGS[@]}"}
