@@ -15,6 +15,7 @@
   "hallucination": {
     "n": 12,
     "hallucinated": 0,
+    "errors": 0,
     "cases": [
       {
         "id": "n01",
