@@ -111,8 +111,8 @@ mots-clés / reformulations conditionne l'ampleur du gain mesuré, d'où la vent
 | Configuration | recall@10 | recall@5 | precision@10 | MRR | latence moy. |
 |---|---|---|---|---|---|
 | BM25 seul | 0,572 | 0,394 | 0,109 | 0,333 | 0,6 ms |
-| Dense seul | 0,659 | 0,424 | 0,127 | 0,396 | 108,7 ms |
-| **Hybride (RRF)** | **0,720** | **0,481** | **0,139** | **0,474** | 21,0 ms |
+| Dense seul | 0,659 | 0,424 | 0,127 | 0,396 | 22,0 ms |
+| **Hybride (RRF)** | **0,720** | **0,481** | **0,139** | **0,474** | 20,7 ms |
 
 recall@10 par type de requête :
 
@@ -128,22 +128,24 @@ Lecture des résultats :
 - Le gain vient surtout des **reformulations** (0,435 → 0,595) : c'est le cas visé (« validate » vs « validation », requêtes
   sans les mots de la doc). Sur les requêtes **mots-clés**, l'hybride égale le dense (0,938) sans le dépasser.
 - Le dense seul est déjà meilleur que BM25 (0,659) ; la fusion apporte encore +0,061 par-dessus, ce qui justifie de garder les deux.
-- **Latence** : la ligne « dense seul » (108,7 ms) est nettement plus lente que « hybride » (21,0 ms) alors que l'hybride fait
-  aussi une recherche dense. Hypothèse (non vérifiée) : la première requête dense paie le chargement/échauffement du modèle,
-  et les configurations sont mesurées dans l'ordre BM25, dense, hybride. Ces latences sont donc **indicatives** ; une mesure
+- **Latence** : BM25 0,6 ms, dense 22,0 ms, hybride 20,7 ms. Le coût du dense est dominé par l'encodage de la requête sur
+  CPU (~20 ms), pas par la recherche SQL. La première exécution du benchmark avait affiché 108,7 ms pour le dense ; ce chiffre
+  ne s'est **pas reproduit** à la seconde exécution (22,0 ms). Je l'attribue à un démarrage à froid (première exécution après le
+  téléchargement du modèle) sans avoir isolé la cause. Les métriques de qualité (recall, MRR) sont, elles, identiques d'une
+  exécution à l'autre. Ces latences restent **indicatives** (une exécution, 44 requêtes, machine de développement) : une mesure
   propre demanderait un échauffement préalable et plusieurs répétitions (prévu en Phase 5).
 
-Compromis exactitude / vitesse (recherche approximative HNSW, m=16, ef_construction=64, construction 0,52 s ; 2529 passages) :
+Compromis exactitude / vitesse (recherche approximative HNSW, m=16, ef_construction=64, construction 0,50 s ; 2529 passages) :
 
 | Mode | recall@10 vs exact | latence moy. | p95 |
 |---|---|---|---|
-| exact (sans index) | 1,000 | 3,72 ms | 5,26 ms |
-| HNSW ef_search=10 | 0,941 | 0,64 ms | 0,91 ms |
-| HNSW ef_search=40 | 0,993 | 0,73 ms | 0,90 ms |
-| HNSW ef_search=100 | 0,998 | 0,93 ms | 1,20 ms |
+| exact (sans index) | 1,000 | 3,44 ms | 3,76 ms |
+| HNSW ef_search=10 | 0,945 | 0,59 ms | 0,70 ms |
+| HNSW ef_search=40 | 0,989 | 0,70 ms | 0,85 ms |
+| HNSW ef_search=100 | 0,998 | 0,87 ms | 1,04 ms |
 
-`ef_search=40` (recall 0,993 pour ~5× moins de latence que l'exact) est un bon compromis à cette échelle. À 2500 passages
-l'exact reste utilisable (3,7 ms) : l'index HNSW ne devient nécessaire que pour des corpus bien plus grands.
+`ef_search=40` (recall 0,989 pour ~5× moins de latence que l'exact) est un bon compromis à cette échelle. À 2500 passages
+l'exact reste utilisable (3,4 ms) : l'index HNSW ne devient nécessaire que pour des corpus bien plus grands.
 
 **Limites de cette mesure** (à garder en tête avant de citer ces chiffres) :
 - **44 requêtes seulement** : l'écart est net mais je n'ai pas calculé d'intervalle de confiance ; un intervalle par bootstrap
