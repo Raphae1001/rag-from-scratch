@@ -1,4 +1,8 @@
 -r requirements.txt
 pytest>=8.0
 rank-bm25>=0.2.2               # tests/test_reference_rank_bm25.py
-pgserver                       # optionnel : Postgres+pgvector sans Docker (tests DB, mode --pgdata)
+# optionnel : Postgres+pgvector sans Docker (tests DB, mode --pgdata). Ne publie pas de wheel pour
+# Python >= 3.13 (vérifié sur PyPI : builds jusqu'à cp312 seulement) ; le marqueur d'environnement fait que
+# pip l'ignore silencieusement sur 3.13+ au lieu de faire échouer TOUTE l'installation (`pip install -r
+# requirements-dev.txt` ne s'arrête plus court avant même d'installer pytest). Sur 3.13+, utiliser Docker.
+pgserver; python_version < "3.13"
