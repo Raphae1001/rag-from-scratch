@@ -6,6 +6,7 @@ Prérequis : scripts/embed_corpus.py déjà exécuté ; $ANTHROPIC_API_KEY dans 
 """
 import argparse
 import json
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from _common import ROOT, add_db_args, doc_key, get_dsn, load_corpus
@@ -45,16 +46,27 @@ def rerank_gate(docs, index, conn, embedder, reranker, queries, top_n: int = 30)
             "after": {"recall@10": float(a_recall), "mrr": float(a_mrr)}}
 
 
-def hallucination_gate(docs, index, conn, embedder, reranker, client, k: int = 5, top_n: int = 20) -> dict:
-    """Sur le set de non-réponse : le système doit répondre "answerable: false" sur 100% des cas."""
-    results = []
+def hallucination_gate(docs, index, conn, embedder, reranker, client, k: int = 5, top_n: int = 20,
+                        max_workers: int = 6) -> dict:
+    """Sur le set de non-réponse : le système doit répondre "answerable: false" sur 100% des cas.
+
+    Le retrieval + reranking reste séquentiel (partage une seule connexion Postgres, pas thread-safe),
+    mais les appels à l'API Claude sont indépendants les uns des autres et dominés par la latence réseau
+    (1-3 s chacun) : on les lance en parallèle avec un ThreadPoolExecutor plutôt qu'un par un. Le GIL
+    n'est pas un problème ici car ces threads passent l'essentiel de leur temps à attendre le réseau.
+    """
+    prepared = []
     for q in NO_ANSWER:
         doc_ids = search_hybrid(index, conn, embedder, q["query"], k=top_n)
         texts = db.get_docs(conn, doc_ids)
         reranked = reranker.rerank(q["query"], [(d, texts[d]["text"]) for d in doc_ids if d in texts])[:k]
         passages = [(f"{texts[d]['path']}#{texts[d]['section']}", texts[d]["text"]) for d, _ in reranked]
-        out = generate_answer(client, q["query"], passages)
-        results.append({"id": q["id"], "query": q["query"], "answerable": out["answerable"], "answer": out["answer"]})
+        prepared.append((q, passages))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        outs = list(pool.map(lambda qp: generate_answer(client, qp[0]["query"], qp[1]), prepared))
+    results = [{"id": q["id"], "query": q["query"], "answerable": out["answerable"], "answer": out["answer"]}
+               for (q, _), out in zip(prepared, outs)]
     hallucinated = [r for r in results if r["answerable"]]
     return {"n": len(results), "hallucinated": len(hallucinated), "cases": results}
 
