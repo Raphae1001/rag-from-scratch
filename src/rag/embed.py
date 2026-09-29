@@ -22,7 +22,9 @@ class SentenceTransformerEmbedder:
         from sentence_transformers import SentenceTransformer  # import tardif : lourd (torch)
 
         self.model = SentenceTransformer(model_name)
-        self.dim = self.model.get_sentence_embedding_dimension()
+        # méthode renommée dans sentence-transformers >= 5 ; repli pour les versions plus anciennes
+        get_dim = getattr(self.model, "get_embedding_dimension", None) or self.model.get_sentence_embedding_dimension
+        self.dim = get_dim()
         self.batch_size = batch_size
 
     def encode(self, texts: list[str]) -> np.ndarray:
