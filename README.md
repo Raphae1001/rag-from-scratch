@@ -10,14 +10,14 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
 pip install -r requirements.txt
-pytest                              # 67 tests
+pytest                              # 93 tests
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
 
 ## Avancement
 - [x] Phase 1 — Recherche classique (J1–J4)
-- [ ] Phase 2 — Recherche dense
+- [~] Phase 2 — Recherche dense (code + tests OK ; **benchmark avec le vrai modèle à exécuter**, voir ci-dessous)
 - [ ] Phase 3 — Génération + garde-fous
 - [ ] Phase 4 — Évaluation
 - [ ] Phase 5 — Prod & observabilité
@@ -67,6 +67,46 @@ Mesuré : **~0,1 ms par requête** en moyenne.
   sections « introduction » n'ont pour contexte que le titre de leur page.
 - **Les 5 requêtes de contrôle** du gate sont un filet de non-régression choisi par l'auteur ; la vraie
   mesure de qualité est le set annoté de la Phase 4.
+
+## Phase 2 — Recherche dense et fusion hybride
+
+**Ce qui est en place** : `docker-compose.yml` (Postgres 16 + pgvector), schéma `db/init.sql`, découpage en
+passages (`chunking.py`), embeddings (`embed.py`), recherche cosinus + HNSW (`db.py`), fusion RRF (`fusion.py`),
+métriques (`metrics.py`), set annoté de 44 requêtes (`data/eval/queries.json`), scripts `embed_corpus.py` et `benchmark.py`.
+
+### Lancer (avec le vrai modèle `all-MiniLM-L6-v2`)
+```bash
+pip install -r requirements.txt
+docker compose up -d                 # Postgres + pgvector sur localhost:5433
+python scripts/embed_corpus.py       # ~2500 passages -> table `chunks` (quelques minutes sur CPU)
+python scripts/benchmark.py          # -> results/phase2_benchmark.md et .json
+```
+Sans Docker (dev) : ajouter `--pgdata data/pgdata` aux deux scripts (Postgres+pgvector local via le paquet pip `pgserver`).
+
+### Choix de conception
+- **Passages de 120 mots (chevauchement 20)** : le modèle tronque à 256 word pieces et ~25 % des sections dépassent
+  cette fenêtre. Le score d'un document = celui de son meilleur passage (`test_chunking_makes_the_tail_...`).
+- **Similarité cosinus** sur vecteurs normalisés (`<=>` de pgvector).
+- **Fusion RRF** (k=60) sur les 50 premiers de chaque méthode : elle ne dépend que des rangs, donc pas de
+  normalisation entre le score BM25 (~0-20) et le cosinus (~0-1).
+- **HNSW non créé au démarrage** : `benchmark.py` le crée et le supprime pour comparer exact / approximatif.
+  Le mode exact force `enable_seqscan=on` : désactiver seulement l'index ne suffit pas (`exact_search` + test).
+
+### Set d'évaluation (`data/eval/queries.json`)
+44 requêtes : 16 « mots-clés » (noms d'API, style développeur pressé) et 28 « reformulations » sans les mots de la
+doc. Annotées **sans passer par BM25** (à partir du plan des pages), clés `chemin#section` vérifiées contre le corpus
+(`tests/test_eval_set.py`). C'est un **brouillon à relire** : les annotations peuvent être discutées, et le mélange
+mots-clés / reformulations conditionne l'ampleur du gain mesuré, d'où la ventilation par type dans le benchmark.
+
+### Résultats
+**Mesuré (BM25 seul, ne dépend pas des embeddings)** : recall@10 = **0,572** (mots-clés 0,812 ; reformulations 0,435),
+MRR = 0,333. C'est la barre que la fusion hybride doit dépasser.
+
+**À mesurer avec le vrai modèle** : recall@10 dense et hybride, et compromis exact / HNSW → coller ici le tableau de
+`results/phase2_benchmark.md`. Gate Phase 2 : recall@10 hybride > BM25 seul. **Non revendiqué tant que non mesuré.**
+
+> Les exécutions `--fake` (embeddings factices, sans sémantique) ne servent qu'à tester la plomberie ; leurs
+> résultats sont écrits dans `results/*_FAKE.*` (ignorés par git) et ne doivent jamais être reportés.
 
 ## Limites connues
 Pas de scale, pas d'agents (hors scope assumé).

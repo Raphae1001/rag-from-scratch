@@ -1,0 +1,440 @@
+[
+  {
+    "id": "q01",
+    "kind": "paraphrase",
+    "query": "how to run code after sending the response to the client",
+    "relevant": [
+      "fastapi/tutorial/background-tasks.md#Using `BackgroundTasks`",
+      "fastapi/tutorial/background-tasks.md#Add the background task"
+    ],
+    "expected_answer": "Declare a `BackgroundTasks` parameter in the path operation function and call `add_task` with the function to run; it runs after the response is sent."
+  },
+  {
+    "id": "q02",
+    "kind": "paraphrase",
+    "query": "return an error to the client with a specific status code",
+    "relevant": [
+      "fastapi/tutorial/handling-errors.md#Raise an `HTTPException` in your code",
+      "fastapi/tutorial/handling-errors.md#The resulting response"
+    ],
+    "expected_answer": "Raise `HTTPException(status_code=..., detail=...)`; FastAPI returns a JSON response with that status code."
+  },
+  {
+    "id": "q03",
+    "kind": "paraphrase",
+    "query": "change how validation errors are returned",
+    "relevant": [
+      "fastapi/tutorial/handling-errors.md#Override request validation exceptions",
+      "fastapi/tutorial/handling-errors.md#Override the default exception handlers"
+    ],
+    "expected_answer": "Register an exception handler for `RequestValidationError` with `@app.exception_handler` to customize the response."
+  },
+  {
+    "id": "q04",
+    "kind": "paraphrase",
+    "query": "allow requests from a frontend running on a different domain",
+    "relevant": [
+      "fastapi/tutorial/cors.md#Use `CORSMiddleware`",
+      "starlette/middleware.md#CORSMiddleware"
+    ],
+    "expected_answer": "Add `CORSMiddleware` with the allowed origins, methods and headers."
+  },
+  {
+    "id": "q05",
+    "kind": "paraphrase",
+    "query": "share one database session across all my endpoints",
+    "relevant": [
+      "fastapi/tutorial/dependencies/dependencies-with-yield.md#A database dependency with `yield`",
+      "fastapi/tutorial/sql-databases.md#Create a Session Dependency"
+    ],
+    "expected_answer": "Write a dependency that opens a session, yields it, and closes it afterwards, then inject it with `Depends`."
+  },
+  {
+    "id": "q06",
+    "kind": "paraphrase",
+    "query": "upload a file to the server",
+    "relevant": [
+      "fastapi/tutorial/request-files.md#Define `File` Parameters",
+      "fastapi/tutorial/request-files.md#File Parameters with `UploadFile`"
+    ],
+    "expected_answer": "Declare a parameter of type `UploadFile` (or `bytes` with `File`) in the path operation function."
+  },
+  {
+    "id": "q07",
+    "kind": "paraphrase",
+    "query": "hash passwords and generate access tokens",
+    "relevant": [
+      "fastapi/tutorial/security/oauth2-jwt.md#Password hashing",
+      "fastapi/tutorial/security/oauth2-jwt.md#Hash and verify the passwords",
+      "fastapi/tutorial/security/oauth2-jwt.md#Handle JWT tokens"
+    ],
+    "expected_answer": "Hash passwords with a password-hashing library and issue signed JWT tokens with an expiration."
+  },
+  {
+    "id": "q08",
+    "kind": "paraphrase",
+    "query": "run some setup and cleanup logic when my app starts and stops",
+    "relevant": [
+      "fastapi/advanced/events.md#Lifespan",
+      "fastapi/advanced/events.md#Lifespan function",
+      "starlette/lifespan.md#(introduction)"
+    ],
+    "expected_answer": "Use a `lifespan` async context manager: code before `yield` runs at startup, code after runs at shutdown."
+  },
+  {
+    "id": "q09",
+    "kind": "paraphrase",
+    "query": "serve my app behind a reverse proxy that strips a path prefix",
+    "relevant": [
+      "fastapi/advanced/behind-a-proxy.md#Proxy with a stripped path prefix",
+      "fastapi/advanced/behind-a-proxy.md#Providing the `root_path`"
+    ],
+    "expected_answer": "Set `root_path` (via `--root-path` or the `FastAPI` parameter) so docs and URLs include the stripped prefix."
+  },
+  {
+    "id": "q10",
+    "kind": "paraphrase",
+    "query": "send live messages to the browser over a persistent two-way connection",
+    "relevant": [
+      "fastapi/advanced/websockets.md#Create a `websocket`",
+      "fastapi/advanced/websockets.md#Await for messages and send messages",
+      "starlette/websockets.md#WebSocket"
+    ],
+    "expected_answer": "Declare a `@app.websocket` endpoint, `accept()` the connection, then `receive_text()` and `send_text()` in a loop."
+  },
+  {
+    "id": "q11",
+    "kind": "keyword",
+    "query": "response model",
+    "relevant": [
+      "fastapi/tutorial/response-model.md#`response_model` Parameter"
+    ],
+    "expected_answer": "The `response_model` parameter declares the model used to validate, filter and document the response."
+  },
+  {
+    "id": "q12",
+    "kind": "keyword",
+    "query": "dependency injection",
+    "relevant": [
+      "fastapi/tutorial/dependencies/index.md#What is \"Dependency Injection\"",
+      "fastapi/tutorial/dependencies/index.md#First Steps",
+      "fastapi/features.md#Dependency Injection"
+    ],
+    "expected_answer": "Dependency injection lets a path operation declare what it needs with `Depends`, and FastAPI provides it."
+  },
+  {
+    "id": "q13",
+    "kind": "keyword",
+    "query": "field validator",
+    "relevant": [
+      "pydantic/concepts/validators.md#Field validators"
+    ],
+    "expected_answer": "Use the `@field_validator` decorator on a model classmethod to validate or transform a single field."
+  },
+  {
+    "id": "q14",
+    "kind": "keyword",
+    "query": "custom exception handler",
+    "relevant": [
+      "fastapi/tutorial/handling-errors.md#Install custom exception handlers"
+    ],
+    "expected_answer": "Define your exception class and register a handler with `@app.exception_handler(MyException)`."
+  },
+  {
+    "id": "q15",
+    "kind": "paraphrase",
+    "query": "add code that runs on every request before and after the endpoint",
+    "relevant": [
+      "fastapi/tutorial/middleware.md#Create a middleware",
+      "fastapi/tutorial/middleware.md#Before and after the `response`",
+      "starlette/middleware.md#Using middleware"
+    ],
+    "expected_answer": "Create a middleware with `@app.middleware(\"http\")` that runs code before and after calling `call_next`."
+  },
+  {
+    "id": "q16",
+    "kind": "paraphrase",
+    "query": "give a model attribute a fallback value when it is missing",
+    "relevant": [
+      "pydantic/concepts/fields.md#Default values"
+    ],
+    "expected_answer": "Assign a default value to the field, or use `Field(default=...)` / `default_factory`."
+  },
+  {
+    "id": "q17",
+    "kind": "paraphrase",
+    "query": "convert a model instance to a dictionary or a JSON string",
+    "relevant": [
+      "pydantic/concepts/serialization.md#Serializing data",
+      "pydantic/concepts/serialization.md#Python mode",
+      "pydantic/concepts/serialization.md#JSON mode"
+    ],
+    "expected_answer": "Use `model_dump()` for a dict and `model_dump_json()` for a JSON string."
+  },
+  {
+    "id": "q18",
+    "kind": "paraphrase",
+    "query": "turn off automatic type coercion so that a string is not accepted as an integer",
+    "relevant": [
+      "pydantic/concepts/strict_mode.md#(introduction)",
+      "pydantic/concepts/strict_mode.md#As a validation parameter",
+      "pydantic/why.md#Strict mode and data coercion"
+    ],
+    "expected_answer": "Enable strict mode, per validation call, per field or in the model config, so that no type coercion happens."
+  },
+  {
+    "id": "q19",
+    "kind": "paraphrase",
+    "query": "pick the right model in a union based on the value of one field",
+    "relevant": [
+      "pydantic/concepts/unions.md#Discriminated unions"
+    ],
+    "expected_answer": "Use a discriminated union with `Field(discriminator='field_name')` so validation selects the member by that field."
+  },
+  {
+    "id": "q20",
+    "kind": "paraphrase",
+    "query": "check the types of a plain function's arguments at call time",
+    "relevant": [
+      "pydantic/concepts/validation_decorator.md#(introduction)"
+    ],
+    "expected_answer": "Decorate the function with `@validate_call` so its arguments are validated."
+  },
+  {
+    "id": "q21",
+    "kind": "keyword",
+    "query": "generate JSON schema from a model",
+    "relevant": [
+      "pydantic/concepts/json_schema.md#Generating JSON Schema"
+    ],
+    "expected_answer": "Call `model_json_schema()` on the model (or `TypeAdapter.json_schema()`)."
+  },
+  {
+    "id": "q22",
+    "kind": "paraphrase",
+    "query": "accept a different name for a field in the incoming data",
+    "relevant": [
+      "pydantic/concepts/alias.md#(introduction)",
+      "pydantic/concepts/fields.md#Field aliases"
+    ],
+    "expected_answer": "Give the field an alias (`Field(alias=...)`, `validation_alias`) so the input key differs from the attribute name."
+  },
+  {
+    "id": "q23",
+    "kind": "paraphrase",
+    "query": "test my API endpoints without starting a server",
+    "relevant": [
+      "fastapi/tutorial/testing.md#Using `TestClient`",
+      "starlette/testclient.md#(introduction)"
+    ],
+    "expected_answer": "Use `TestClient(app)` and call it like a requests/httpx client inside pytest tests."
+  },
+  {
+    "id": "q24",
+    "kind": "paraphrase",
+    "query": "package my application in a container image",
+    "relevant": [
+      "fastapi/deployment/docker.md#Build a Docker Image for FastAPI",
+      "fastapi/deployment/docker.md#Dockerfile"
+    ],
+    "expected_answer": "Write a Dockerfile that installs requirements and starts the app with `fastapi run`, then build the image."
+  },
+  {
+    "id": "q25",
+    "kind": "paraphrase",
+    "query": "handle more traffic by running several processes of the server",
+    "relevant": [
+      "fastapi/deployment/server-workers.md#Multiple Workers",
+      "fastapi/deployment/concepts.md#Multiple Processes - Workers"
+    ],
+    "expected_answer": "Start the server with multiple worker processes (for example `fastapi run --workers 4`)."
+  },
+  {
+    "id": "q26",
+    "kind": "paraphrase",
+    "query": "protect an endpoint so only requests with a valid bearer token can use it",
+    "relevant": [
+      "fastapi/tutorial/security/first-steps.md#**FastAPI**'s `OAuth2PasswordBearer`",
+      "fastapi/tutorial/security/first-steps.md#Use it"
+    ],
+    "expected_answer": "Create an `OAuth2PasswordBearer` instance and use it as a dependency to extract the token."
+  },
+  {
+    "id": "q27",
+    "kind": "paraphrase",
+    "query": "when should an endpoint be async def and when plain def",
+    "relevant": [
+      "fastapi/async.md#In a hurry?",
+      "fastapi/async.md#Path operation functions"
+    ],
+    "expected_answer": "Use `async def` if you call awaitable libraries; use plain `def` for blocking code, which runs in a threadpool."
+  },
+  {
+    "id": "q28",
+    "kind": "paraphrase",
+    "query": "return rendered HTML pages from templates",
+    "relevant": [
+      "fastapi/advanced/templates.md#Using `Jinja2Templates`",
+      "starlette/templates.md#(introduction)"
+    ],
+    "expected_answer": "Use `Jinja2Templates` and return `templates.TemplateResponse` with a request and context."
+  },
+  {
+    "id": "q29",
+    "kind": "paraphrase",
+    "query": "restrict a numeric path parameter to a range of values",
+    "relevant": [
+      "fastapi/tutorial/path-params-numeric-validations.md#Number validations: greater than or equal",
+      "fastapi/tutorial/path-params-numeric-validations.md#Number validations: greater than and less than or equal"
+    ],
+    "expected_answer": "Use `Path(ge=..., le=...)` (or `gt`, `lt`) to constrain the numeric value."
+  },
+  {
+    "id": "q30",
+    "kind": "paraphrase",
+    "query": "update only some fields of an existing item without replacing the whole thing",
+    "relevant": [
+      "fastapi/tutorial/body-updates.md#Partial updates with `PATCH`",
+      "fastapi/tutorial/body-updates.md#Using Pydantic's `exclude_unset` parameter"
+    ],
+    "expected_answer": "Use PATCH and `model_dump(exclude_unset=True)` to update only the fields the client sent."
+  },
+  {
+    "id": "q31",
+    "kind": "keyword",
+    "query": "list of submodels nested models",
+    "relevant": [
+      "fastapi/tutorial/body-nested-models.md#Nested Models",
+      "fastapi/tutorial/body-nested-models.md#Attributes with lists of submodels"
+    ],
+    "expected_answer": "Declare a model as the type of an attribute, or a `list[SubModel]`, to nest models in the body."
+  },
+  {
+    "id": "q32",
+    "kind": "paraphrase",
+    "query": "read configuration values from a .env file",
+    "relevant": [
+      "fastapi/advanced/settings.md#Reading a `.env` file",
+      "fastapi/advanced/settings.md#Read settings from `.env`",
+      "starlette/config.md#(introduction)"
+    ],
+    "expected_answer": "Use a `Settings` class (pydantic-settings) with `env_file` configured, or Starlette's `Config`."
+  },
+  {
+    "id": "q33",
+    "kind": "paraphrase",
+    "query": "send a very large response piece by piece instead of loading it in memory",
+    "relevant": [
+      "fastapi/advanced/stream-data.md#A `StreamingResponse` with `yield`",
+      "starlette/responses.md#StreamingResponse"
+    ],
+    "expected_answer": "Return a `StreamingResponse` fed by a generator that yields chunks."
+  },
+  {
+    "id": "q34",
+    "kind": "paraphrase",
+    "query": "upgrade my project from pydantic version 1 to version 2",
+    "relevant": [
+      "fastapi/how-to/migrate-from-pydantic-v1-to-pydantic-v2.md#(introduction)",
+      "pydantic/migration.md#Install Pydantic V2",
+      "pydantic/migration.md#Code transformation tool"
+    ],
+    "expected_answer": "Follow the migration guide and use the `bump-pydantic` code transformation tool."
+  },
+  {
+    "id": "q35",
+    "kind": "keyword",
+    "query": "swagger ui theme parameters",
+    "relevant": [
+      "fastapi/how-to/configure-swagger-ui.md#Change the Theme",
+      "fastapi/how-to/configure-swagger-ui.md#Change Default Swagger UI Parameters"
+    ],
+    "expected_answer": "Pass `swagger_ui_parameters` to the FastAPI app to change Swagger UI settings, including the syntax-highlight theme."
+  },
+  {
+    "id": "q36",
+    "kind": "keyword",
+    "query": "CORS middleware",
+    "relevant": [
+      "fastapi/tutorial/cors.md#Use `CORSMiddleware`",
+      "starlette/middleware.md#CORSMiddleware"
+    ],
+    "expected_answer": "Add `CORSMiddleware` with the allowed origins, methods and headers."
+  },
+  {
+    "id": "q37",
+    "kind": "keyword",
+    "query": "path parameters enum",
+    "relevant": [
+      "fastapi/tutorial/path-params.md#Predefined values",
+      "fastapi/tutorial/path-params.md#Create an `Enum` class"
+    ],
+    "expected_answer": "Create a `str, Enum` class and use it as the type of the path parameter to restrict it to predefined values."
+  },
+  {
+    "id": "q38",
+    "kind": "keyword",
+    "query": "OAuth2 scopes",
+    "relevant": [
+      "fastapi/advanced/security/oauth2-scopes.md#OAuth2 scopes and OpenAPI"
+    ],
+    "expected_answer": "OAuth2 scopes are permission strings declared in the security scheme and checked with `SecurityScopes`."
+  },
+  {
+    "id": "q39",
+    "kind": "keyword",
+    "query": "HTTPException",
+    "relevant": [
+      "fastapi/tutorial/handling-errors.md#Raise an `HTTPException` in your code",
+      "starlette/exceptions.md#HTTPException"
+    ],
+    "expected_answer": "`HTTPException` carries a status code and detail and is turned into an error response."
+  },
+  {
+    "id": "q40",
+    "kind": "keyword",
+    "query": "dependencies with yield",
+    "relevant": [
+      "fastapi/tutorial/dependencies/dependencies-with-yield.md#A dependency with `yield` and `try`",
+      "fastapi/tutorial/dependencies/dependencies-with-yield.md#A database dependency with `yield`"
+    ],
+    "expected_answer": "A dependency can `yield` a value; code after the `yield` runs as cleanup after the response."
+  },
+  {
+    "id": "q41",
+    "kind": "keyword",
+    "query": "computed_field",
+    "relevant": [
+      "pydantic/concepts/fields.md#The `computed_field` decorator"
+    ],
+    "expected_answer": "`@computed_field` includes a property in serialization and JSON schema."
+  },
+  {
+    "id": "q42",
+    "kind": "keyword",
+    "query": "model_validator",
+    "relevant": [
+      "pydantic/concepts/validators.md#Model validators"
+    ],
+    "expected_answer": "`@model_validator` validates the model as a whole, in `before`, `after` or `wrap` mode."
+  },
+  {
+    "id": "q43",
+    "kind": "keyword",
+    "query": "TypeAdapter",
+    "relevant": [
+      "pydantic/concepts/type_adapter.md#Parsing data into a specified type"
+    ],
+    "expected_answer": "`TypeAdapter` validates and serializes arbitrary types without defining a model."
+  },
+  {
+    "id": "q44",
+    "kind": "keyword",
+    "query": "GZipMiddleware",
+    "relevant": [
+      "starlette/middleware.md#GZipMiddleware",
+      "fastapi/advanced/middleware.md#`GZipMiddleware`"
+    ],
+    "expected_answer": "`GZipMiddleware` compresses responses for clients that send `Accept-Encoding: gzip`."
+  }
+]
