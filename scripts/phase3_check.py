@@ -6,6 +6,7 @@ Prérequis : scripts/embed_corpus.py déjà exécuté ; $ANTHROPIC_API_KEY dans 
 """
 import argparse
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -82,24 +83,34 @@ def main():
     docs = load_corpus()
     queries = json.loads((ROOT / "data" / "eval" / "queries.json").read_text(encoding="utf-8"))
     index = build_index([d["text"] for d in docs])
+
+    t0 = time.perf_counter()
     embedder = HashingEmbedder() if args.fake else SentenceTransformerEmbedder(args.model)
     reranker = OverlapReranker() if args.fake else CrossEncoderReranker()
     conn = db.connect(get_dsn(args))
     n_docs, _ = db.counts(conn)
     assert n_docs == len(docs), "embeddings non chargés : lancer scripts/embed_corpus.py (avec les mêmes options)"
+    t_load = time.perf_counter() - t0
 
+    t0 = time.perf_counter()
     rerank_result = rerank_gate(docs, index, conn, embedder, reranker, queries)
+    t_rerank_gate = time.perf_counter() - t0
     rerank_ok = rerank_result["after"]["recall@10"] > rerank_result["before"]["recall@10"] or \
         rerank_result["after"]["mrr"] > rerank_result["before"]["mrr"]
 
     warn = ""
+    t0 = time.perf_counter()
     if args.fake:
         warn = "\n> ⚠️ PLOMBERIE FACTICE (--fake) : pas de génération réelle, ces chiffres ne mesurent rien. Ne pas les reporter.\n"
         hallu_result = {"n": 0, "hallucinated": 0, "cases": [], "skipped": True}
     else:
         client = AnthropicClient()
         hallu_result = hallucination_gate(docs, index, conn, embedder, reranker, client)
+    t_hallu_gate = time.perf_counter() - t0
     hallu_ok = args.fake or hallu_result["hallucinated"] == 0
+
+    print(f"[timing] chargement modèles+DB : {t_load:.1f}s | gate reranking ({len(queries)} requêtes) : "
+          f"{t_rerank_gate:.1f}s | gate non-hallucination ({len(NO_ANSWER)} requêtes) : {t_hallu_gate:.1f}s")
 
     md = [f"# Vérification Phase 3 ({len(queries)} requêtes annotées, {len(NO_ANSWER)} requêtes de non-réponse){warn}",
           "", "## Gate reranking — recall@10 / MRR avant vs après cross-encoder", "",
