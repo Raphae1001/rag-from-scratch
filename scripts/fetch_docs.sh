@@ -5,19 +5,23 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p data
 
-fetch() {  # nom  url  sha  dossier_docs
-  local name=$1 url=$2 sha=$3 docs=$4 dir="data/${1}_repo"
+fetch() {  # nom  url  sha  dossier(s) à checkout (un ou plusieurs, ex: "docs/en/docs" "docs_src")
+  local name=$1 url=$2 sha=$3 dir="data/${1}_repo"
+  shift 3
   if [ -d "$dir/.git" ] && [ "$(git -C "$dir" rev-parse HEAD 2>/dev/null)" = "$sha" ]; then
+    git -C "$dir" sparse-checkout set "$@"   # idempotent : rafraîchit si la liste de dossiers a changé
     echo "$name: déjà au commit $sha"; return
   fi
   rm -rf "$dir"
   git clone -q --filter=blob:none --no-checkout "$url" "$dir"
-  git -C "$dir" sparse-checkout set "$docs"
+  git -C "$dir" sparse-checkout set "$@"
   git -C "$dir" fetch -q --depth 1 origin "$sha"
   git -C "$dir" checkout -q "$sha"
   echo "$name: $sha"
 }
 
-fetch fastapi   https://github.com/fastapi/fastapi.git   a3d205bf19640528718cb4f05ab77f4dfca6ad9a docs/en/docs
+# fastapi : docs_src/ en plus de docs/en/docs — les pages de doc y référencent des exemples de code réels
+# via une directive {* ../../docs_src/X ln[a:b] *} que build_corpus.py résout (voir resolve_code_snippets).
+fetch fastapi   https://github.com/fastapi/fastapi.git   a3d205bf19640528718cb4f05ab77f4dfca6ad9a docs/en/docs docs_src
 fetch starlette https://github.com/encode/starlette.git  63c5760d8a672cee96e1e523d84bfa1c77d9ee4c docs
 fetch pydantic  https://github.com/pydantic/pydantic.git bb6da4cfbb1f559885ea2fa207ec93853bfeac64 docs

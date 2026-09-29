@@ -8,25 +8,25 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 ## Démarrage
 ```bash
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
-python scripts/build_corpus.py      # -> data/corpus.jsonl (1597 documents)
+python scripts/build_corpus.py      # -> data/corpus.jsonl (1616 documents)
 pip install -r requirements-dev.txt
-pytest                              # 121 tests (les tests de base utilisent Docker si `pgserver` est absent)
+pytest                              # 130 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
 
 ## Avancement
 - [x] Phase 1 — Recherche classique (J1–J4)
-- [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,572 → hybride 0,720)
+- [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,576 → hybride 0,739)
 - [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
-- [x] Phase 4 — Évaluation (fidélité 0,964 sur 41/44 réponses, tableau comparatif final — voir section)
+- [x] Phase 4 — Évaluation (fidélité 0,951 sur 42/44 réponses, tableau comparatif final — voir section)
 - [ ] Phase 5 — Prod & observabilité
 - [ ] Phase 6 — Fine-tuning contrastif
 
 ## Validation Phase 1 (gate)
 | Critère de la spec | Preuve |
 |---|---|
-| Corpus ≥ 1000 documents | `test_corpus_has_at_least_1000_documents` (1597 docs, 3 sources) |
+| Corpus ≥ 1000 documents | `test_corpus_has_at_least_1000_documents` (1616 docs, 3 sources) |
 | Index reconstruit sans erreur sur le corpus complet | `python scripts/phase1_check.py` + `test_rebuild_is_deterministic` |
 | Requêtes visiblement pertinentes (5 requêtes) | `test_gate_query_returns_expected_page_in_top5` (5 cas) + sortie lisible de `phase1_check.py` |
 | Score BM25 calculé à la main = code (non-régression) | `tests/test_bm25.py` (mini-corpus de 3 docs, valeurs dérivées ligne à ligne) |
@@ -40,8 +40,8 @@ Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voi
 Un seul passage sur le corpus : chaque document est tokenisé (linéaire en sa taille), ses fréquences
 sont comptées avec un `Counter`, puis insérées dans `postings[terme][doc_id]` (insertion dict en O(1)
 amorti). Coût total O(T), T = nombre total de tokens. La mémoire est O(P), P = nombre de couples
-(terme, document) distincts, plus O(N) pour les longueurs. Mesuré sur le corpus (1597 docs,
-222 170 tokens, 6320 termes, 110 605 postings) : **< 100 ms**.
+(terme, document) distincts, plus O(N) pour les longueurs. Mesuré sur le corpus (1616 docs,
+252 383 tokens, 6446 termes, 118 285 postings) : **< 100 ms**.
 
 ### Requête : O(Σ_t |postings(t)| + m log k)
 On ne parcourt que les listes de postings des termes de la requête, jamais les N documents :
@@ -82,7 +82,7 @@ ou pas à pas :
 ```bash
 pip install -r requirements-dev.txt
 docker compose up -d --wait          # Postgres + pgvector sur localhost:5433
-python scripts/embed_corpus.py       # ~2500 passages -> table `chunks` (quelques minutes sur CPU)
+python scripts/embed_corpus.py       # ~2750 passages -> table `chunks` (quelques minutes sur CPU)
 python scripts/benchmark.py          # -> results/phase2_benchmark.md et .json
 ```
 Tests de base de données (`tests/test_db.py`) : ils utilisent `pgserver` (Postgres jetable, paquet pip) s'il est installé, sinon le
@@ -106,46 +106,49 @@ doc. Annotées **sans passer par BM25** (à partir du plan des pages), clés `ch
 (`tests/test_eval_set.py`). C'est un **brouillon à relire** : les annotations peuvent être discutées, et le mélange
 mots-clés / reformulations conditionne l'ampleur du gain mesuré, d'où la ventilation par type dans le benchmark.
 
-### Résultats (mesurés : `all-MiniLM-L6-v2`, 44 requêtes, 1597 documents, image Docker `pgvector/pgvector:pg16`)
+### Résultats (mesurés : `all-MiniLM-L6-v2`, 44 requêtes, 1616 documents, image Docker `pgvector/pgvector:pg16`)
 
 | Configuration | recall@10 | recall@5 | precision@10 | MRR | latence moy. |
 |---|---|---|---|---|---|
-| BM25 seul | 0,572 | 0,394 | 0,109 | 0,333 | 0,6 ms |
-| Dense seul | 0,659 | 0,424 | 0,127 | 0,396 | 22,0 ms |
-| **Hybride (RRF)** | **0,720** | **0,481** | **0,139** | **0,474** | 20,7 ms |
+| BM25 seul | 0,576 | 0,379 | 0,109 | 0,357 | 0,7 ms |
+| Dense seul | 0,617 | 0,432 | 0,120 | 0,412 | 21,9 ms |
+| **Hybride (RRF)** | **0,739** | **0,485** | **0,141** | **0,508** | 20,0 ms |
 
 recall@10 par type de requête :
 
 | Configuration | mots-clés (n=16) | reformulations (n=28) |
 |---|---|---|
-| BM25 seul | 0,812 | 0,435 |
-| Dense seul | 0,938 | 0,500 |
-| Hybride (RRF) | 0,938 | 0,595 |
+| BM25 seul | 0,844 | 0,423 |
+| Dense seul | 0,906 | 0,452 |
+| Hybride (RRF) | 1,000 | 0,589 |
 
-**Gate Phase 2 atteint** : recall@10 hybride (0,720) > BM25 seul (0,572), soit +0,148 (+26 % relatif).
+**Gate Phase 2 atteint** : recall@10 hybride (0,739) > BM25 seul (0,576), soit +0,163 (+28 % relatif).
 
 Lecture des résultats :
-- Le gain vient surtout des **reformulations** (0,435 → 0,595) : c'est le cas visé (« validate » vs « validation », requêtes
-  sans les mots de la doc). Sur les requêtes **mots-clés**, l'hybride égale le dense (0,938) sans le dépasser.
-- Le dense seul est déjà meilleur que BM25 (0,659) ; la fusion apporte encore +0,061 par-dessus, ce qui justifie de garder les deux.
-- **Latence** : BM25 0,6 ms, dense 22,0 ms, hybride 20,7 ms. Le coût du dense est dominé par l'encodage de la requête sur
-  CPU (~20 ms), pas par la recherche SQL. La première exécution du benchmark avait affiché 108,7 ms pour le dense ; ce chiffre
-  ne s'est **pas reproduit** à la seconde exécution (22,0 ms). Je l'attribue à un démarrage à froid (première exécution après le
-  téléchargement du modèle) sans avoir isolé la cause. Les métriques de qualité (recall, MRR) sont, elles, identiques d'une
-  exécution à l'autre. Ces latences restent **indicatives** (une exécution, 44 requêtes, machine de développement) : une mesure
-  propre demanderait un échauffement préalable et plusieurs répétitions (prévu en Phase 5).
+- Le gain vient surtout des **reformulations** (0,423 → 0,589) : c'est le cas visé (« validate » vs « validation », requêtes
+  sans les mots de la doc). Sur les requêtes **mots-clés**, l'hybride atteint 1,000 (10/10 points en jeu retrouvés).
+- **Le dense seul a légèrement reculé** (0,659 → 0,617) après la correction du corpus décrite ci-dessous, qui ajoute du vrai
+  code Python dans ~23 % des documents FastAPI. Hypothèse non vérifiée : `all-MiniLM-L6-v2` est entraîné sur du langage
+  naturel, pas du code — des passages plus longs mélangeant prose et code diluent peut-être le signal sémantique, ou le code
+  pousse une partie de la prose hors de la fenêtre de 120 mots. La fusion RRF absorbe cette perte (BM25 profite du
+  vocabulaire de code ajouté) : le hybride progresse malgré tout (0,720 → 0,739). Non creusé plus loin — signalé tel quel.
+- **Latence** : BM25 0,7 ms, dense 21,9 ms, hybride 20,0 ms. Le coût du dense est dominé par l'encodage de la requête sur
+  CPU (~20 ms), pas par la recherche SQL. La première exécution du benchmark (avant la correction du corpus) avait affiché
+  108,7 ms pour le dense une fois, jamais reproduit depuis (démarrage à froid probable, cause non isolée). Ces latences
+  restent **indicatives** (une exécution, 44 requêtes, machine de développement) : une mesure propre demanderait un
+  échauffement préalable et plusieurs répétitions (prévu en Phase 5).
 
-Compromis exactitude / vitesse (recherche approximative HNSW, m=16, ef_construction=64, construction 0,50 s ; 2529 passages) :
+Compromis exactitude / vitesse (recherche approximative HNSW, m=16, ef_construction=64, construction 0,55 s ; 2757 passages) :
 
 | Mode | recall@10 vs exact | latence moy. | p95 |
 |---|---|---|---|
-| exact (sans index) | 1,000 | 3,44 ms | 3,76 ms |
-| HNSW ef_search=10 | 0,945 | 0,59 ms | 0,70 ms |
-| HNSW ef_search=40 | 0,989 | 0,70 ms | 0,85 ms |
-| HNSW ef_search=100 | 0,998 | 0,87 ms | 1,04 ms |
+| exact (sans index) | 1,000 | 4,10 ms | 4,74 ms |
+| HNSW ef_search=10 | 0,948 | 0,61 ms | 0,90 ms |
+| HNSW ef_search=40 | 0,995 | 0,76 ms | 1,03 ms |
+| HNSW ef_search=100 | 1,000 | 0,98 ms | 1,32 ms |
 
-`ef_search=40` (recall 0,989 pour ~5× moins de latence que l'exact) est un bon compromis à cette échelle. À 2500 passages
-l'exact reste utilisable (3,4 ms) : l'index HNSW ne devient nécessaire que pour des corpus bien plus grands.
+`ef_search=40` (recall 0,995 pour ~5× moins de latence que l'exact) est un bon compromis à cette échelle. À 2750 passages
+l'exact reste utilisable (4,1 ms) : l'index HNSW ne devient nécessaire que pour des corpus bien plus grands.
 
 **Limites de cette mesure** (à garder en tête avant de citer ces chiffres) :
 - **44 requêtes seulement** : l'écart est net mais je n'ai pas calculé d'intervalle de confiance ; un intervalle par bootstrap
@@ -155,6 +158,23 @@ l'exact reste utilisable (3,4 ms) : l'index HNSW ne devient nécessaire que pour
 - Paramètres non réglés : k=60 pour RRF, 50 candidats par méthode, passages de 120 mots. Aucun réglage n'a été fait sur ce set,
   donc pas de sur-ajustement, mais aussi pas d'optimisation.
 - Le rapport complet est dans `results/phase2_benchmark.md` et `.json`.
+
+### Correction de corpus (post-Phase 4) : exemples de code manquants
+
+En creusant un refus de réponse en Phase 4 (voir plus bas), j'ai trouvé que **372 documents sur 1597 (23,3 % du corpus,
+37,6 % des documents FastAPI)** contenaient une directive d'inclusion de code propre au générateur de doc FastAPI
+(`{* ../../docs_src/chemin.py ln[a:b] *}`) **jamais résolue** : `scripts/fetch_docs.sh` ne clonait que `docs/en/docs`, pas
+le dossier `docs_src/` du dépôt que ces directives référencent. Résultat : environ un quart des documents FastAPI avaient
+une explication textuelle correcte mais **sans l'exemple de code réel** — un vrai trou de qualité de corpus, pas une
+simple imperfection de présentation.
+
+**Corrigé à la racine** : `fetch_docs.sh` clone maintenant aussi `docs_src/` ; `build_corpus.py::resolve_code_snippets`
+parse la directive et insère le vrai code (testé dans `tests/test_build_corpus.py`, y compris une variante de syntaxe
+`hl[...] title[...]` découverte en cours de route). Après correction : **1616 documents** (+19, certaines sections
+passent le seuil de 15 mots grâce au code ajouté), **1 seule directive résiduelle non résolue** sur tout le corpus
+(`fastapi/how-to/configure-swagger-ui.md`, qui référence le code source de la librairie FastAPI elle-même, pas
+`docs_src/` — catégorie différente, non traitée). L'ensemble des Phases 2, 3 et 4 a été re-mesuré après cette correction ;
+les chiffres de ce README sont ceux d'après correction.
 
 > Les exécutions `--fake` (embeddings factices, sans sémantique) ne servent qu'à tester la plomberie ; leurs
 > résultats sont écrits dans `results/*_FAKE.*` (ignorés par git) et ne doivent jamais être reportés.
@@ -201,11 +221,12 @@ comme non-répondables, 0 hallucination. Détail dans `results/phase3_report.md`
 
 | | recall@10 | MRR |
 |---|---|---|
-| Hybride seul | 0,720 | 0,474 |
-| Hybride + reranking | 0,686 | 0,521 |
+| Hybride seul | 0,739 | 0,508 |
+| Hybride + reranking | 0,705 | 0,556 |
 
-Le reranking **améliore le MRR** (+0,047 : le premier résultat pertinent remonte davantage) mais **dégrade le
-recall@10** (−0,034 : certains documents pertinents sortent du top-10 après reranking). Le script accepte le
+Le reranking **améliore le MRR** (+0,048 : le premier résultat pertinent remonte davantage) mais **dégrade le
+recall@10** (−0,034 : certains documents pertinents sortent du top-10 après reranking) — même schéma qu'avant la
+correction du corpus (voir Phase 2), ce n'est donc pas un artefact du bug de code manquant. Le script accepte le
 gate si recall@10 **ou** MRR s'améliore (la spec demande une amélioration mesurée, sans préciser laquelle des
 deux métriques) — je le documente ici sans l'enjoliver : le cross-encoder est meilleur pour remonter *la*
 bonne réponse en position 1, pas pour préserver toute la couverture du top-10. Une piste non explorée : reranker
@@ -243,24 +264,39 @@ python scripts/phase4_check.py    # -> results/phase4_report.{md,json}
 
 | Configuration | recall@10 | recall@5 | precision@10 | MRR |
 |---|---|---|---|---|
-| BM25 seul | 0,572 | 0,394 | 0,109 | 0,333 |
-| Dense seul | 0,659 | 0,424 | 0,127 | 0,396 |
-| **Hybride (RRF)** | **0,720** | **0,481** | **0,139** | **0,474** |
+| BM25 seul | 0,576 | 0,379 | 0,109 | 0,357 |
+| Dense seul | 0,617 | 0,432 | 0,120 | 0,412 |
+| **Hybride (RRF)** | **0,739** | **0,485** | **0,141** | **0,508** |
 
-**Configuration gagnante : hybride (RRF)** — recall@10 supérieur de +0,148 à BM25 seul, sans coût de latence
+**Configuration gagnante : hybride (RRF)** — recall@10 supérieur de +0,163 à BM25 seul, sans coût de latence
 supplémentaire notable par rapport au dense seul.
 
-**Fidélité (faithfulness)** : sur les 44 requêtes, **41 répondables, 3 correctement refusées, 0 erreur de
-format** (le prompt a été retravaillé en cours de route — voir "Limites" ci-dessous). Score de fidélité moyen
-sur les 41 réponses : **0,964** — 13 affirmations sur environ 360 jugées non soutenues par le contexte cité.
-Détail dans `results/phase4_report.md`.
+**Fidélité (faithfulness)** : sur les 44 requêtes, **42 répondables, 2 correctement refusées, 0 erreur de
+format** (le prompt a été retravaillé en cours de route — voir "Bug rencontré" ci-dessous). Score de fidélité
+moyen sur les 42 réponses : **0,951** — 16 affirmations sur plusieurs centaines jugées non soutenues par le
+contexte cité. Détail dans `results/phase4_report.md`.
 
-**Limite honnête sur cette mesure** : je n'ai pas relu à la main les 13 affirmations flaggées par le juge. En
+**Limite honnête sur cette mesure** : je n'ai pas relu à la main les 16 affirmations flaggées par le juge. En
 survolant la liste, plusieurs ressemblent à des reformulations correctes plutôt qu'à de vraies inventions (le
 juge LLM applique un standard strict — « soutenu » exige que le contexte le dise explicitement, pas seulement
-que ce soit vrai). Le score de 0,964 est donc probablement une **borne basse** de la vraie fidélité, pas une
+que ce soit vrai). Le score de 0,951 est donc probablement une **borne basse** de la vraie fidélité, pas une
 mesure parfaitement calibrée. Une vraie calibration demanderait de faire annoter un échantillon à la main et
 de comparer — hors scope ici.
+
+**Les 2 refus ont été vérifiés un par un** (pas juste comptés) :
+- `q16` (« give a model attribute a fallback value when it is missing ») : **vrai raté de retrieval** — le bon
+  document (`pydantic/concepts/fields.md#Default values`) n'apparaît jamais dans le top-5 présenté au modèle ;
+  à la place, une ambiguïté lexicale fait remonter des pages sur les fallback pages FastAPI et les erreurs de
+  validation Pydantic ("missing"), sans rapport avec la question. Cohérent avec la limite déjà documentée en
+  Phase 1 (pas de synonymes) — pas corrigé au cas par cas pour ne pas sur-ajuster au set d'éval.
+- `q05` (« share one database session across all my endpoints ») : **refus correct et défendable**, pas un bug.
+  Le bon document est bien dans le contexte, mais le modèle a noté — à raison — que la doc décrit l'inverse de
+  la question littérale : une **nouvelle** session **par requête** via une dependency, pas une session unique
+  **partagée**. Il a préféré signaler l'écart plutôt que de deviner l'intention. Je n'ai pas assoupli le prompt
+  pour forcer une réponse ici : ça affaiblirait le garde-fou sur des cas réellement ambigus ailleurs.
+- Une 3e requête (`q03`, « change how validation errors are returned ») était refusée avant la correction du
+  corpus décrite plus haut, et répond maintenant correctement — c'était un vrai raté de retrieval, corrigé
+  indirectement en réparant le corpus (le bon document contient maintenant plus de contenu utile).
 
 **Bug rencontré en cours de mesure** : sur la requête `"field validator"` (style mot-clé, très courte), Claude
 a répondu par une question de clarification en texte libre au lieu du JSON attendu, faisant planter le script.
@@ -279,4 +315,8 @@ Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, S
 [`NOTICE.md`](NOTICE.md) et `third_party_licenses/`. Ce projet n'est pas affilié à ces projets.
 
 ## Limites connues
-Pas de scale, pas d'agents (hors scope assumé).
+Pas de scale, pas d'agents (hors scope assumé). Une directive d'inclusion de code résiduelle non résolue dans
+tout le corpus (`fastapi/how-to/configure-swagger-ui.md`, référence le code source de la librairie FastAPI
+elle-même plutôt que `docs_src/` — voir section Phase 2, "Correction de corpus"). Retrieval imparfait sur les
+requêtes à forte ambiguïté lexicale (voir Phase 4, `q16`) : limite connue de la Phase 1 (pas de synonymes),
+non corrigée au cas par cas pour ne pas sur-ajuster au set d'évaluation.

@@ -6,26 +6,32 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
 
 ## État
 - Phase 1 (BM25 from scratch) : **terminée**. Phase 2 (dense pgvector + fusion RRF) : **terminée**, gate atteint et mesuré
-  (recall@10 hybride 0,720 > BM25 0,572, 44 requêtes, `results/phase2_benchmark.md`).
+  (recall@10 hybride 0,739 > BM25 0,576, 44 requêtes, `results/phase2_benchmark.md`).
 - Phase 3 (génération + garde-fous) : **terminée**, gates mesurés (`results/phase3_report.md`) — 0/12 hallucination
-  (parfait), citations vérifiées, reranking mitigé (MRR 0,474→0,521 mieux, recall@10 0,720→0,686 moins bien : le
+  (parfait), citations vérifiées, reranking mitigé (MRR 0,508→0,556 mieux, recall@10 0,739→0,705 moins bien : le
   cross-encoder remonte mieux la 1re bonne réponse mais fait sortir des docs pertinents du top-10). Documenté
   honnêtement dans le README, pas caché.
-- Phase 4 (évaluation) : **terminée**, mesuré (`results/phase4_report.md`) — 41/44 répondables, fidélité 0,964
+- Phase 4 (évaluation) : **terminée**, mesuré (`results/phase4_report.md`) — 42/44 répondables, fidélité 0,951
   (borne basse honnête, juge LLM non calibré à la main), 0 erreur de format après correction du prompt sur les
-  requêtes courtes style mot-clé (voir README, section Phase 4, "bug rencontré").
+  requêtes courtes style mot-clé. Les 2 refus restants ont été vérifiés un par un (pas juste comptés) : `q16` =
+  vrai raté de retrieval (limite Phase 1 connue), `q05` = refus correct et défendable (garde-fou qui fonctionne
+  sur une question littéralement ambiguë), voir README section Phase 4.
+- **Correction de corpus post-Phase 4** : 23,3% des documents (37,6% des FastAPI) avaient une directive
+  `{* docs_src/... *}` de FastAPI non résolue (code manquant) — `fetch_docs.sh` ne clonait pas `docs_src/`.
+  Corrigé (`build_corpus.py::resolve_code_snippets`, testé dans `test_build_corpus.py`) ; corpus 1597→1616 docs ;
+  Phases 2/3/4 entièrement re-mesurées après correction (chiffres ci-dessus = après correction).
 - Phases 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
 
 ## Commandes
 ```bash
-bash scripts/fetch_docs.sh && python scripts/build_corpus.py   # corpus (commits figés) -> data/corpus.jsonl (1597 docs)
+bash scripts/fetch_docs.sh && python scripts/build_corpus.py   # corpus (commits figés) -> data/corpus.jsonl (1616 docs)
 docker compose up -d --wait                                    # Postgres 16 + pgvector, localhost:5433
 python scripts/embed_corpus.py && python scripts/benchmark.py  # embeddings + benchmark Phase 2
 bash scripts/run_phase2.sh                                     # tout, avec venv
 python scripts/answer.py "une question"                        # Phase 3 : pipeline complet (besoin d'ANTHROPIC_API_KEY)
 python scripts/phase3_check.py                                 # Phase 3 : gates -> results/phase3_report.md
 python scripts/phase4_check.py                                 # Phase 4 : fidélité -> results/phase4_report.md
-python -m pytest -q                                            # 121 tests
+python -m pytest -q                                            # 130 tests
 ```
 
 ## Règles de travail
