@@ -10,7 +10,7 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1616 documents)
 pip install -r requirements-dev.txt
-pytest                              # 130 tests (les tests de base utilisent Docker si `pgserver` est absent)
+pytest                              # 136 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
@@ -20,7 +20,7 @@ Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voi
 - [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,576 → hybride 0,739)
 - [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
 - [x] Phase 4 — Évaluation (fidélité 0,951 sur 42/44 réponses, tableau comparatif final — voir section)
-- [ ] Phase 5 — Prod & observabilité
+- [x] Phase 5 — Prod & observabilité (API Docker, traçage Langfuse vérifié, latence mesurée — voir section)
 - [ ] Phase 6 — Fine-tuning contrastif
 
 ## Validation Phase 1 (gate)
@@ -311,6 +311,72 @@ part, jamais confondu avec un refus correct ou une hallucination). Après ce cor
 - Le set d'évaluation est versionné (`data/eval/queries.json`, 44 requêtes) — déjà vrai depuis la Phase 2
 - Chaque métrique est calculée par un script reproductible — `scripts/benchmark.py` (Phase 2) + `phase4_check.py`
 - Le tableau comparatif final montre clairement la configuration gagnante avec une explication — ci-dessus
+
+## Phase 5 — Production & observabilité
+
+**Ce qui est en place** : API FastAPI (`src/rag/api.py`, `POST /query` + `GET /health`), `Dockerfile` +
+service `api` dans `docker-compose.yml`, traçage Langfuse optionnel, script de latence propre
+(`scripts/measure_latency.py`).
+
+### Design
+- **Chargement une fois, pas par requête** : le `lifespan` FastAPI charge le corpus, l'index BM25,
+  l'embedder, le reranker, la connexion DB et le client Claude au démarrage — le chargement des modèles
+  domine largement la latence d'une requête isolée (mesuré en Phase 3), donc on ne le paie qu'une fois.
+- **Démarrage sans intervention manuelle** : `docker-entrypoint.sh` appelle `scripts/ensure_embedded.py`
+  avant de lancer l'API — si les embeddings ne sont pas déjà chargés (compte de documents ≠ taille du
+  corpus), il lance `embed_corpus.py` tout seul. `docker compose up` répond donc à une requête de bout en
+  bout sans étape manuelle, y compris sur un volume Postgres vierge (vérifié).
+- **Traçage Langfuse optionnel** : absent si `$LANGFUSE_PUBLIC_KEY` n'est pas définie (même principe que
+  `pgserver` : une fonctionnalité en moins, pas un plantage). Quand il est configuré, chaque requête crée
+  une trace avec 3 observations enfants (`retrieval`, `reranking`, `generation`), chacune avec la vraie
+  latence mesurée en métadonnée — ces observations sont créées après coup, une fois le pipeline terminé
+  (leur propre durée dans Langfuse est donc quasi nulle), c'est la donnée en métadonnée qui compte, pas la
+  durée de l'observation elle-même.
+- **Coût par requête** : `AnthropicClient` expose `last_usage` (tokens d'entrée/sortie du dernier appel,
+  canal latéral, sans toucher au `Protocol` `LLMClient`) — Langfuse calcule le coût automatiquement à
+  partir de ça et du nom du modèle.
+
+### Lancer
+```bash
+docker compose up -d --wait                       # DB + API ; charge les embeddings si absents
+curl -X POST http://localhost:8000/query -H "Content-Type: application/json" \
+  -d '{"query": "how do I upload a file to the server"}'
+python scripts/measure_latency.py                 # latence propre -> results/phase5_latency.md
+```
+
+### Résultats (mesurés : conteneur Docker, `claude-haiku-4-5-20251001`, Langfuse Cloud)
+
+**Gate Docker — atteint** : `docker compose up -d --wait` démarre les deux conteneurs sur un volume
+Postgres **vierge** (testé avec un port différent pour éviter toute collision) et répond à une requête
+complète sans aucune étape manuelle — `ensure_embedded.py` a chargé les embeddings tout seul.
+
+**Gate Langfuse — atteint, vérifié visuellement dans le vrai dashboard** (pas juste supposé) : la trace
+`69877a6bbd25999f9f5edcca8a615c8b` montre les 4 observations attendues (`query` → `retrieval`,
+`reranking`, `generation`), latence par étape correcte en métadonnées (174 ms / 1385 ms / 5849 ms,
+identique à la réponse JSON de l'API), et le nœud `generation` affiche le modèle
+(`claude-haiku-4-5-20251001`), **1831 tokens** et un coût calculé automatiquement (**$0,003163**).
+
+**Gate latence — mesuré avec échauffement + répétitions** (3 requêtes d'échauffement, 3×5 = 15 mesures,
+contre le conteneur Docker) :
+
+| Étape | moyenne (ms) | p50 (ms) | p95 (ms) |
+|---|---|---|---|
+| total (HTTP) | 3712,2 | 3924,6 | 4751,5 |
+| retrieval | 39,7 | 40,3 | 52,9 |
+| reranking | 975,3 | 968,9 | 1087,9 |
+| génération | 2557,9 | 2773,3 | 3619,6 |
+
+La génération domine (appel réseau à l'API Claude, hors de notre contrôle). Le reranking est notablement
+plus lent que mesuré en Phase 3 hors Docker (~250 ms) — hypothèse non vérifiée : CPU alloué au conteneur
+Docker Desktop plus restreint que sur l'hôte directement. Signalé honnêtement, pas creusé plus loin (15
+mesures seulement, pas de quoi trancher une cause précise). Détail dans `results/phase5_latency.md`.
+
+### Limites connues de la Phase 5
+- Image Docker lourde (~2 Go, torch inclus) — accepté, même compromis que documenté depuis la Phase 2.
+- Pas de retry/backoff sur l'appel à l'API Claude : une erreur réseau fait échouer la requête entière.
+- Pas d'authentification sur l'API (`/query` est ouvert) — hors scope pour ce projet d'apprentissage.
+- La mesure de latence ci-dessus est sur 15 requêtes seulement (même limite méthodologique que le reste
+  du projet : peu de données, pas d'intervalle de confiance).
 
 ## Licences et crédits
 Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir

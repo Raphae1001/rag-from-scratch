@@ -20,18 +20,25 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
   `{* docs_src/... *}` de FastAPI non résolue (code manquant) — `fetch_docs.sh` ne clonait pas `docs_src/`.
   Corrigé (`build_corpus.py::resolve_code_snippets`, testé dans `test_build_corpus.py`) ; corpus 1597→1616 docs ;
   Phases 2/3/4 entièrement re-mesurées après correction (chiffres ci-dessus = après correction).
-- Phases 5 (API + observabilité), 6 (fine-tuning contrastif) : à faire.
+- Phase 5 (API + observabilité) : **terminée**, gates vérifiés — Docker démarre sans intervention manuelle
+  (`ensure_embedded.py` charge les embeddings seul), traçage Langfuse **vérifié visuellement dans le vrai
+  dashboard** (trace avec les 4 observations attendues, coût/tokens/modèle corrects), latence propre mesurée
+  avec échauffement (`results/phase5_latency.md`). Reranking plus lent en Docker qu'en natif (975ms vs 250ms) :
+  signalé, pas creusé (hypothèse CPU alloué au conteneur, non vérifiée).
+- Phase 6 (fine-tuning contrastif) : à faire.
 
 ## Commandes
 ```bash
 bash scripts/fetch_docs.sh && python scripts/build_corpus.py   # corpus (commits figés) -> data/corpus.jsonl (1616 docs)
-docker compose up -d --wait                                    # Postgres 16 + pgvector, localhost:5433
+docker compose up -d --wait                                    # DB + API, localhost:5433/8000
 python scripts/embed_corpus.py && python scripts/benchmark.py  # embeddings + benchmark Phase 2
 bash scripts/run_phase2.sh                                     # tout, avec venv
 python scripts/answer.py "une question"                        # Phase 3 : pipeline complet (besoin d'ANTHROPIC_API_KEY)
 python scripts/phase3_check.py                                 # Phase 3 : gates -> results/phase3_report.md
 python scripts/phase4_check.py                                 # Phase 4 : fidélité -> results/phase4_report.md
-python -m pytest -q                                            # 130 tests
+curl -X POST localhost:8000/query -d '{"query":"..."}'          # Phase 5 : API (besoin de docker compose up)
+python scripts/measure_latency.py                               # Phase 5 : latence -> results/phase5_latency.md
+python -m pytest -q                                             # 136 tests
 ```
 
 ## Règles de travail
@@ -51,4 +58,4 @@ HNSW m=16, ef_construction=64, ef_search=40 (créé/supprimé par le benchmark) 
 1. ~~Réécrire l'historique git local avec l'adresse noreply GitHub de Raphael~~ — fait : historique réécrit
    (`89992240+Raphae1001@users.noreply.github.com`), dépôt privé [Raphae1001/rag-from-scratch](https://github.com/Raphae1001/rag-from-scratch)
    créé et poussé sur `master`. Passage en public plus tard, à sa demande.
-2. Mesure de latence propre (échauffement + répétitions) : prévue en Phase 5.
+2. ~~Mesure de latence propre (échauffement + répétitions)~~ — fait en Phase 5, voir `results/phase5_latency.md`.

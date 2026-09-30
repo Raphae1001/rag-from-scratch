@@ -1,6 +1,6 @@
-# Postgres 16 + pgvector pour la Phase 2 (et l'API de la Phase 5).
-#   docker compose up -d        # démarre et crée le schéma (db/init.sql) au premier lancement
-#   docker compose down -v      # arrête ET supprime les données
+# Postgres 16 + pgvector (Phase 2) + API RAG (Phase 5).
+#   docker compose up -d --wait   # démarre tout ; l'API charge les embeddings au 1er lancement si absents
+#   docker compose down -v        # arrête ET supprime les données
 services:
   db:
     image: pgvector/pgvector:pg16
@@ -18,5 +18,25 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # à l'intérieur du réseau docker-compose : hôte "db", port interne 5432 (pas le port publié 5433)
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rag}:${POSTGRES_PASSWORD:-rag}@db:5432/${POSTGRES_DB:-rag}
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY manquant, à mettre dans .env}"
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 60          # laisse le temps au 1er chargement des embeddings (~10-15 s) + des modèles
+      start_period: 10s
 volumes:
   pgdata:
