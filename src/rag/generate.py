@@ -34,7 +34,11 @@ class LLMClient(Protocol):
 
 
 class AnthropicClient:
-    """Client réel (API Claude). Lit ANTHROPIC_API_KEY dans l'environnement si `api_key` n'est pas fourni."""
+    """Client réel (API Claude). Lit ANTHROPIC_API_KEY dans l'environnement si `api_key` n'est pas fourni.
+
+    `last_usage` : tokens d'entrée/sortie du dernier appel (canal latéral, pas dans le Protocol `LLMClient`
+    pour ne pas changer sa signature) — lu par l'API (Phase 5) pour le coût estimé envoyé à Langfuse.
+    """
 
     def __init__(self, model: str = "claude-haiku-4-5-20251001", api_key: str | None = None, max_tokens: int = 1024):
         import anthropic  # import tardif : évite la dépendance dure pour qui ne fait que du retrieval
@@ -42,6 +46,7 @@ class AnthropicClient:
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
         self.max_tokens = max_tokens
+        self.last_usage: dict[str, int] | None = None
 
     def complete(self, system: str, user: str) -> str:
         resp = self.client.messages.create(
@@ -50,6 +55,7 @@ class AnthropicClient:
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        self.last_usage = {"input": resp.usage.input_tokens, "output": resp.usage.output_tokens}
         return resp.content[0].text
 
 
@@ -60,6 +66,7 @@ class FakeLLMClient:
     def __init__(self, responses: dict[str, str]):
         self.responses = responses
         self.calls: list[tuple[str, str]] = []
+        self.last_usage: dict[str, int] | None = None  # jamais renseigné : pas de vrai coût sans appel réel
 
     def complete(self, system: str, user: str) -> str:
         self.calls.append((system, user))

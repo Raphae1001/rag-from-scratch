@@ -3,3 +3,6 @@ sentence-transformers>=3.0     # embeddings + reranking cross-encoder (télécha
 psycopg[binary]>=3.1
 pgvector>=0.3
 anthropic>=0.40                # génération (Phase 3), clé lue depuis $ANTHROPIC_API_KEY
+fastapi>=0.115                  # API (Phase 5)
+uvicorn[standard]>=0.30         # serveur ASGI (Phase 5)
+langfuse>=3.0                   # traçage (Phase 5), optionnel : clés lues depuis $LANGFUSE_PUBLIC_KEY/$LANGFUSE_SECRET_KEY
