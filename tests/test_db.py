@@ -24,7 +24,10 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo  # noqa: E402
 from rag import db  # noqa: E402
 from rag.chunking import make_chunks  # noqa: E402
 from rag.embed import HashingEmbedder  # noqa: E402
+from rag.generate import FakeLLMClient  # noqa: E402
 from rag.index import build_index  # noqa: E402
+from rag.pipeline import answer  # noqa: E402
+from rag.rerank import OverlapReranker  # noqa: E402
 from rag.retrieval import search_bm25, search_dense, search_hybrid  # noqa: E402
 
 EMB = HashingEmbedder()
@@ -190,6 +193,22 @@ def test_hybrid_search_combines_both_rankings(conn):
     assert set(res) <= {0, 1, 2, 3}
     assert search_bm25(index, "HTTPException", k=3)[0] == 0
     assert search_dense(conn, EMB, "HTTPException", k=3)[0] == 0
+
+
+def test_pipeline_answer_returns_citations_and_latency(conn):
+    """rag.pipeline.answer : le pipeline complet (retrieval -> reranking -> génération) partagé par
+    scripts/answer.py et l'API (Phase 5). FakeLLMClient + OverlapReranker : pas d'appel réseau."""
+    load(conn, DOCS)
+    index = build_index([d["text"] for d in DOCS])
+    client = FakeLLMClient({
+        "raise an HTTPException": '{"answerable": true, "answer": "Raise HTTPException.", "sources": ["S1"]}',
+    })
+    result = answer("raise an HTTPException error", conn, index, EMB, OverlapReranker(), client, k=3, top_n=4)
+
+    assert result["answerable"] is True
+    assert result["citations"] == ["t/p0.md#Errors"]
+    assert set(result["latency_ms"]) == {"retrieval", "reranking", "generation"}
+    assert all(ms >= 0 for ms in result["latency_ms"].values())
 
 
 @pytest.mark.skipif(not CORPUS.exists(), reason="lancer scripts/build_corpus.py d'abord")

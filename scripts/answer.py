@@ -9,24 +9,10 @@ from _common import add_db_args, get_dsn, load_corpus
 
 from rag import db
 from rag.embed import SentenceTransformerEmbedder
-from rag.generate import AnthropicClient, generate_answer
+from rag.generate import AnthropicClient
 from rag.index import build_index
+from rag.pipeline import answer
 from rag.rerank import CrossEncoderReranker
-from rag.retrieval import search_hybrid
-
-
-def answer(query: str, conn, index, embedder, reranker, client, k: int = 5, top_n: int = 20) -> dict:
-    """Pipeline complet Phase 3 pour une requête : retrieval hybride -> reranking -> génération sourcée.
-
-    `top_n` : nombre de résultats hybrides (déjà fusionnés) passés au reranker — pas à confondre avec le
-    paramètre `candidates` de `search_hybrid`, qui règle un pool interne différent (BM25/dense avant fusion).
-    """
-    doc_ids = search_hybrid(index, conn, embedder, query, k=top_n)
-    docs = db.get_docs(conn, doc_ids)
-    reranked = reranker.rerank(query, [(d, docs[d]["text"]) for d in doc_ids if d in docs])
-    top = reranked[:k]
-    passages = [(f"{docs[d]['path']}#{docs[d]['section']}", docs[d]["text"]) for d, _ in top]
-    return generate_answer(client, query, passages)
 
 
 def main():
@@ -53,6 +39,10 @@ def main():
         print("\nSources :")
         for c in result["citations"]:
             print(f"  - {c}")
+
+    lat = result["latency_ms"]
+    print(f"\n[latence] retrieval {lat['retrieval']:.0f} ms | reranking {lat['reranking']:.0f} ms | "
+          f"génération {lat['generation']:.0f} ms")
 
 
 if __name__ == "__main__":
