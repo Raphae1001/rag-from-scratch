@@ -10,7 +10,7 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1616 documents)
 pip install -r requirements-dev.txt
-pytest                              # 141 tests (les tests de base utilisent Docker si `pgserver` est absent)
+pytest                              # 147 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
@@ -21,7 +21,7 @@ Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voi
 - [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
 - [x] Phase 4 — Évaluation (fidélité 0,957-0,962 calibrée sur deux runs indépendants — voir section)
 - [x] Phase 5 — Prod & observabilité (API Docker, traçage Langfuse vérifié, latence mesurée — voir section)
-- [ ] Phase 6 — Fine-tuning contrastif
+- [x] Phase 6 — Fine-tuning contrastif (recall@10 dense +0,068 après LoRA — voir section)
 
 ## Validation Phase 1 (gate)
 | Critère de la spec | Preuve |
@@ -388,6 +388,72 @@ mesures seulement, pas de quoi trancher une cause précise). Détail dans `resul
 - Pas d'authentification sur l'API (`/query` est ouvert) — hors scope pour ce projet d'apprentissage.
 - La mesure de latence ci-dessus est sur 15 requêtes seulement (même limite méthodologique que le reste
   du projet : peu de données, pas d'intervalle de confiance).
+
+## Phase 6 — Fine-tuning contrastif
+
+**Ce qui est en place** : génération de paires d'entraînement sans fuite (`scripts/make_training_pairs.py`),
+fine-tuning LoRA contrastif (`scripts/finetune_embeddings.py`), ré-évaluation complète style Phase 4
+(`scripts/phase6_check.py`), checkpoint versionné (`models/finetuned-minilm-lora/`, 1,3 Mo).
+
+### Design
+- **Paires (requête, document) sans LLM, sans fuite** : le titre de page + section sert de "requête" faible,
+  le corps du document (sans le titre répété) sert de positif — supervision faible standard pour des
+  embeddings de retrieval, gratuite et déterministe (pas d'appel API). **Tous les documents pertinents pour
+  le set d'évaluation des 44 requêtes sont exclus de l'échantillon d'entraînement** (82 documents exclus sur
+  1616) : sans cette exclusion, le fine-tuning apprendrait spécifiquement à bien retrouver les documents sur
+  lesquels on le réévalue ensuite — une fuite qui gonflerait artificiellement le gain mesuré, exactement le
+  genre de biais que la règle du projet ("ne jamais ajuster pour faire passer un critère") interdit. 400
+  paires échantillonnées sur 1352 éligibles.
+- **LoRA, pas un fine-tuning complet** : adaptateurs de rang 16 sur les projections `query`/`value` de
+  l'attention (`peft.LoraConfig`), modèle de base gelé — **0,65% des paramètres entraînables** (147k / 22,9M).
+  Rapide (18s sur CPU pour 400 paires × 3 époques), peu de mémoire, et le résultat reste un modèle
+  `sentence-transformers` standard, rechargeable sans code spécifique.
+- **Loss contrastive `MultipleNegativesRankingLoss`** : chaque paire du batch sert de négatif implicite aux
+  autres paires du même batch — pas besoin d'annoter des négatifs explicites.
+- **Ré-évaluation en mémoire, pas de seconde base Postgres** : le modèle fine-tuné produit des vecteurs
+  différents du modèle de base, donc la table `chunks` existante (embeddings du modèle de base) n'est pas
+  réutilisable telle quelle. Plutôt que de réindexer dans Postgres, `phase6_check.py` recalcule la recherche
+  dense en numpy pur (~2750 passages, largement assez petit pour ne pas avoir besoin d'un index) — même
+  méthode, mêmes 44 requêtes, seule la source des vecteurs change.
+
+### Lancer
+```bash
+python scripts/make_training_pairs.py      # -> data/train/pairs.jsonl (déjà versionné, pas la peine de refaire)
+python scripts/finetune_embeddings.py      # -> models/finetuned-minilm-lora/ + results/phase6_loss_curve.png
+python scripts/phase6_check.py             # -> results/phase6_report.md
+```
+
+### Résultats (mesurés : CPU, 400 paires, 3 époques, 44 requêtes annotées)
+
+**Entraînement** : bout en bout en **18,2s sur CPU** (pas de GPU utilisé ni nécessaire à cette échelle),
+147 456 / 22 860 672 paramètres entraînables. Courbe de loss (`results/phase6_loss_curve.png`) : tendance
+baissière nette (0,76 → 0,57) mais bruitée — attendu avec seulement 39 pas d'optimisation au total (peu de
+données, 3 époques).
+
+| | recall@10 | precision@10 | MRR |
+|---|---|---|---|
+| Dense (base, `all-MiniLM-L6-v2`) | 0,617 | 0,120 | 0,412 |
+| **Dense (fine-tuné LoRA)** | **0,686** | 0,136 | 0,492 |
+| Hybride (base) | 0,739 | 0,141 | 0,508 |
+| **Hybride (fine-tuné)** | **0,735** | 0,141 | 0,514 |
+
+**Gate Phase 6 atteint** : recall@10 dense +0,068 (+11 % relatif) après fine-tuning. **Mais l'hybride, lui,
+ne bouge quasiment pas** (−0,004, dans le bruit) — et c'est expliqué, pas juste rapporté tel quel : la
+fusion RRF combine déjà BM25 et dense, donc l'essentiel du gain du dense fine-tuné est **recouvert** par ce
+que BM25 trouvait déjà. Le fine-tuning améliore clairement le signal sémantique pur, mais son effet est
+dilué une fois fusionné avec un lexical déjà solide. Sur un corpus où BM25 serait plus faible, l'effet du
+fine-tuning sur l'hybride serait probablement plus visible.
+
+### Limites connues de la Phase 6
+- **400 paires de supervision faible**, pas des requêtes naturelles annotées à la main comme le set d'éval
+  — le "signal" d'entraînement (titre → corps) est un proxy, pas une vraie requête utilisateur.
+- **Un seul run** : pas de moyenne sur plusieurs seeds/répétitions d'entraînement, donc le gain de +0,068
+  pourrait varier avec une autre initialisation. Cohérent avec la limite déjà assumée ailleurs (44 requêtes,
+  pas d'intervalle de confiance sur CE chiffre précis — contrairement au gain Phase 2 qui, lui, en a un).
+- **CPU seulement testé** : le script détecte `cuda` automatiquement mais n'a pas été exécuté sur GPU ici.
+- Hyperparamètres (rang LoRA=16, lr=2e-4, 3 époques) choisis raisonnablement mais non balayés (pas de
+  recherche d'hyperparamètres) — pas d'optimisation poussée, juste une preuve que le pipeline fonctionne et
+  améliore la métrique visée.
 
 ## Licences et crédits
 Code : licence MIT (`LICENSE`). Le corpus reprend la documentation de FastAPI, Starlette et Pydantic sous leurs licences (MIT / BSD-3-Clause) : voir
