@@ -33,7 +33,13 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
   dashboard** (trace avec les 4 observations attendues, coût/tokens/modèle corrects), latence propre mesurée
   avec échauffement (`results/phase5_latency.md`). Reranking plus lent en Docker qu'en natif (975ms vs 250ms) :
   signalé, pas creusé (hypothèse CPU alloué au conteneur, non vérifiée).
-- Phase 6 (fine-tuning contrastif) : à faire.
+- Phase 6 (fine-tuning contrastif) : **terminée**, gate mesuré (`results/phase6_report.md`) — LoRA (rang 16,
+  0,65% des paramètres), 400 paires titre→corps sans LLM, **82 documents pertinents pour le set d'éval
+  explicitement exclus de l'entraînement** (pas de fuite). Recall@10 dense +0,068 (0,617→0,686), hybride quasi
+  stable (−0,004, expliqué : RRF dilue déjà le gain dense avec BM25). 18,2s d'entraînement sur CPU, checkpoint
+  versionné dans `models/finetuned-minilm-lora/` (1,3 Mo).
+- **Les 6 phases de la spec sont terminées.** Ce qui reste hors scope, assumé (voir README "Limites connues") :
+  pas de scale, pas d'auth sur l'API, pas de retry réseau, pas de synonymes BM25, corpus tiers non affilié.
 
 ## Commandes
 ```bash
@@ -47,7 +53,9 @@ python scripts/phase4_check.py                                 # Phase 4 : fidé
 curl -X POST localhost:8000/query -d '{"query":"..."}'          # Phase 5 : API (besoin de docker compose up)
 python scripts/measure_latency.py                               # Phase 5 : latence -> results/phase5_latency.md
 python scripts/bootstrap_ci.py                                  # IC bootstrap Phase 2 -> results/phase2_bootstrap_ci.md
-python -m pytest -q                                             # 141 tests
+python scripts/make_training_pairs.py && python scripts/finetune_embeddings.py   # Phase 6 : LoRA -> models/finetuned-minilm-lora/
+python scripts/phase6_check.py                                  # Phase 6 : gate -> results/phase6_report.md
+python -m pytest -q                                             # 147 tests
 ```
 
 ## Règles de travail
