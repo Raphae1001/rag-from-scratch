@@ -10,16 +10,16 @@ fusion hybride, génération avec garde-fous, évaluation, API + Langfuse, fine-
 bash scripts/fetch_docs.sh          # clone les 3 docs à des commits figés (corpus reproductible)
 python scripts/build_corpus.py      # -> data/corpus.jsonl (1616 documents)
 pip install -r requirements-dev.txt
-pytest                              # 136 tests (les tests de base utilisent Docker si `pgserver` est absent)
+pytest                              # 141 tests (les tests de base utilisent Docker si `pgserver` est absent)
 python scripts/phase1_check.py      # rebuild de l'index + 5 requêtes de contrôle
 ```
 Commits figés : FastAPI `a3d205b`, Starlette `63c5760`, Pydantic `bb6da4c` (voir `scripts/fetch_docs.sh`).
 
 ## Avancement
 - [x] Phase 1 — Recherche classique (J1–J4)
-- [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,576 → hybride 0,739)
+- [x] Phase 2 — Recherche dense + fusion hybride (recall@10 : BM25 0,576 → hybride 0,739, gain significatif — IC95% bootstrap [0,087, 0,250])
 - [x] Phase 3 — Génération + garde-fous (0/12 hallucination, citations vérifiées, reranking mitigé — voir section)
-- [x] Phase 4 — Évaluation (fidélité 0,951 sur 42/44 réponses, tableau comparatif final — voir section)
+- [x] Phase 4 — Évaluation (fidélité 0,957-0,962 calibrée sur deux runs indépendants — voir section)
 - [x] Phase 5 — Prod & observabilité (API Docker, traçage Langfuse vérifié, latence mesurée — voir section)
 - [ ] Phase 6 — Fine-tuning contrastif
 
@@ -152,9 +152,13 @@ Compromis exactitude / vitesse (recherche approximative HNSW, m=16, ef_construct
 `ef_search=40` (recall 0,995 pour ~5× moins de latence que l'exact) est un bon compromis à cette échelle. À 2750 passages
 l'exact reste utilisable (4,1 ms) : l'index HNSW ne devient nécessaire que pour des corpus bien plus grands.
 
+**Intervalle de confiance (bootstrap, `scripts/bootstrap_ci.py`)** : 44 requêtes rééchantillonnées avec remise,
+10 000 tirages. Écart hybride − BM25 = **0,163, IC95% [0,087, 0,250]** — l'intervalle exclut 0, le gain est
+**statistiquement significatif** sur ce set, malgré sa petite taille. Détail dans `results/phase2_bootstrap_ci.md`.
+
 **Limites de cette mesure** (à garder en tête avant de citer ces chiffres) :
-- **44 requêtes seulement** : l'écart est net mais je n'ai pas calculé d'intervalle de confiance ; un intervalle par bootstrap
-  sur les requêtes est prévu en Phase 4 avec le set complet.
+- **44 requêtes seulement** : le bootstrap ci-dessus quantifie l'incertitude due à la taille de l'échantillon,
+  mais ne corrige pas un biais dans les annotations elles-mêmes (point suivant).
 - **Annotations faites par l'auteur** (et un assistant), à partir du plan des pages et sans regarder les résultats de BM25 ; elles
   sont discutables, et le set est équilibré à la main entre mots-clés (16) et reformulations (28), ce qui influence l'ampleur du gain.
 - Paramètres non réglés : k=60 pour RRF, 50 candidats par méthode, passages de 120 mots. Aucun réglage n'a été fait sur ce set,
@@ -173,10 +177,12 @@ simple imperfection de présentation.
 **Corrigé à la racine** : `fetch_docs.sh` clone maintenant aussi `docs_src/` ; `build_corpus.py::resolve_code_snippets`
 parse la directive et insère le vrai code (testé dans `tests/test_build_corpus.py`, y compris une variante de syntaxe
 `hl[...] title[...]` découverte en cours de route). Après correction : **1616 documents** (+19, certaines sections
-passent le seuil de 15 mots grâce au code ajouté), **1 seule directive résiduelle non résolue** sur tout le corpus
-(`fastapi/how-to/configure-swagger-ui.md`, qui référence le code source de la librairie FastAPI elle-même, pas
-`docs_src/` — catégorie différente, non traitée). L'ensemble des Phases 2, 3 et 4 a été re-mesuré après cette correction ;
-les chiffres de ce README sont ceux d'après correction.
+passent le seuil de 15 mots grâce au code ajouté), **0 directive résiduelle non résolue** sur tout le corpus — la
+dernière (`fastapi/how-to/configure-swagger-ui.md`, qui référençait le code source de la librairie FastAPI elle-même,
+pas `docs_src/`) a été résolue en généralisant le résolveur : il n'est plus ancré sur `docs_src/` spécifiquement, mais
+résout tout chemin relatif à la racine du dépôt (`fetch_docs.sh` clone aussi `fastapi/openapi/` en conséquence).
+L'ensemble des Phases 2, 3 et 4 a été re-mesuré après chacune de ces deux corrections ; les chiffres de ce README
+sont ceux d'après la correction finale.
 
 > Les exécutions `--fake` (embeddings factices, sans sémantique) ne servent qu'à tester la plomberie ; leurs
 > résultats sont écrits dans `results/*_FAKE.*` (ignorés par git) et ne doivent jamais être reportés.
@@ -275,15 +281,20 @@ supplémentaire notable par rapport au dense seul.
 
 **Fidélité (faithfulness)** : sur les 44 requêtes, **42 répondables, 2 correctement refusées, 0 erreur de
 format** (le prompt a été retravaillé en cours de route — voir "Bug rencontré" ci-dessous). Score de fidélité
-moyen sur les 42 réponses : **0,951** — 16 affirmations sur plusieurs centaines jugées non soutenues par le
-contexte cité. Détail dans `results/phase4_report.md`.
+brut (jugé par LLM, 392 affirmations au total) : **0,949**. Détail dans `results/phase4_report.md`.
 
-**Limite honnête sur cette mesure** : je n'ai pas relu à la main les 16 affirmations flaggées par le juge. En
-survolant la liste, plusieurs ressemblent à des reformulations correctes plutôt qu'à de vraies inventions (le
-juge LLM applique un standard strict — « soutenu » exige que le contexte le dise explicitement, pas seulement
-que ce soit vrai). Le score de 0,951 est donc probablement une **borne basse** de la vraie fidélité, pas une
-mesure parfaitement calibrée. Une vraie calibration demanderait de faire annoter un échantillon à la main et
-de comparer — hors scope ici.
+**Calibration manuelle du juge, sur deux runs indépendants** (chaque affirmation flaggée relue contre le vrai
+texte des passages cités, pas juste survolée) : run 1 (avant la dernière correction de corpus) = 16/392
+flaggées, run 2 (après) = 18/392 flaggées. **Sur les deux runs, verdict identique** : la quasi-totalité des
+affirmations flaggées sont de vrais écarts de grounding strict, mais **aucune des 34 affirmations flaggées au
+total n'est factuellement fausse** — ce sont des faits réels sur FastAPI/Pydantic (ex. « 403 = Forbidden »,
+les 4 modes de field validator Pydantic, l'option `--workers`) que le modèle connaît de manière générale mais
+qui ne sont pas explicitement dans le **seul passage cité** pour cette réponse précise. C'est un manquement
+au grounding strict, pas une hallucination dangereuse. Le même cas précis (`q35`, paramètres Swagger UI) est
+une **vraie erreur du juge sur les deux runs** : le passage cité contient explicitement le mécanisme décrit.
+**Score corrigé : 0,962 (run 1) et 0,957 (run 2)** — stable à ~0,01 près malgré la non-déterminisme du juge
+LLM d'un run à l'autre sur *quelles* affirmations précises il flag. Détail dans `results/phase4_report.json`,
+clé `faithfulness.manual_review`.
 
 **Les 2 refus ont été vérifiés un par un** (pas juste comptés) :
 - `q16` (« give a model attribute a fallback value when it is missing ») : **vrai raté de retrieval** — le bon

@@ -76,3 +76,15 @@ def test_resolve_code_snippets_handles_multiple_directives_in_one_page(tmp_path)
     text = "{* ../../docs_src/a.py *}\n{* ../../docs_src/b.py *}"
     out = resolve_code_snippets(text, tmp_path)
     assert "aaa" in out and "bbb" in out
+
+
+def test_resolve_code_snippets_resolves_paths_outside_docs_src_too(tmp_path):
+    """Un cas réel du corpus (configure-swagger-ui.md) référence le code source de FastAPI lui-même,
+    pas un exemple sous docs_src/ : {* ../../fastapi/openapi/docs.py ln[9:24] hl[18:24] *}. Le résolveur
+    ne doit pas être limité à "docs_src/" -- tout chemin relatif à la racine du dépôt doit marcher."""
+    (tmp_path / "fastapi" / "openapi").mkdir(parents=True)
+    (tmp_path / "fastapi" / "openapi" / "docs.py").write_text(
+        "\n".join(f"line{i}" for i in range(1, 30)), encoding="utf-8")
+
+    out = resolve_code_snippets("{* ../../fastapi/openapi/docs.py ln[9:11] hl[10] *}", tmp_path)
+    assert "```py\nline9\nline10\nline11\n```" in out
