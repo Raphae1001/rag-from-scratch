@@ -1,0 +1,14 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/fastapi_repo/
+data/starlette_repo/
+data/pydantic_repo/
+data/pgdata/
+data/eval/
+docs/spec/
+results/
+tests/
+.env
