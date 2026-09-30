@@ -73,6 +73,7 @@ HNSW m=16, ef_construction=64, ef_search=40 (créé/supprimé par le benchmark) 
 
 ## En attente (avant toute publication)
 1. ~~Réécrire l'historique git local avec l'adresse noreply GitHub de Raphael~~ — fait : historique réécrit
-   (`89992240+Raphae1001@users.noreply.github.com`), dépôt privé [Raphae1001/rag-from-scratch](https://github.com/Raphae1001/rag-from-scratch)
-   créé et poussé sur `master`. Passage en public plus tard, à sa demande.
+   (`89992240+Raphae1001@users.noreply.github.com`), dépôt créé et poussé sur `master`.
+2. ~~Passage en public~~ — fait, à la demande de Raphael : [Raphae1001/rag-from-scratch](https://github.com/Raphae1001/rag-from-scratch)
+   est maintenant **public**. Aucun secret trouvé lors de la vérification finale avant publication.
 2. ~~Mesure de latence propre (échauffement + répétitions)~~ — fait en Phase 5, voir `results/phase5_latency.md`.
