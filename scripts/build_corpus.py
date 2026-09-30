@@ -37,19 +37,19 @@ SOURCES = {
 
 HEADING = re.compile(r"^(#{1,3})\s+(.*?)\s*(\{\s*#[^}]*\})?\s*$")  # ancre `{ #id }` retirée
 
-# FastAPI référence des exemples de code réels depuis ses pages Markdown via une directive de macro
-# propre à son générateur de doc : `{* ../../docs_src/<chemin>.py ln[a:b,c:d] hl[...] title[...] *}`
+# FastAPI référence du code réel (exemples dans docs_src/, ou son propre code source ex. fastapi/openapi/)
+# depuis ses pages Markdown via une directive de macro : `{* ../../<chemin> ln[a:b,c:d] hl[...] title[...] *}`
 # (ln = lignes à inclure, les autres attributs — hl, title — sont ignorés ici, l'ordre et la présence de
 # chacun varient). Sans résolution, ~23% des documents FastAPI du corpus (37,6% des documents FastAPI
-# seuls) ont une section avec du texte explicatif mais sans le code réel — mesuré après une génération
+# seuls) avaient une section avec du texte explicatif mais sans le code réel — mesuré après une génération
 # hallucinée à cause d'un contexte incomplet (voir README, section Phase 4).
-# On ancre sur "docs_src/" plutôt que de recompter les "../" (dont la profondeur relative au fichier .md
-# ne correspond pas à la macro réelle de FastAPI) : le chemin après "docs_src/" suffit à retrouver le
-# fichier, qui est toujours à la racine du dépôt sous docs_src/. Les attributs sont capturés en bloc
-# (`attrs`) puis on y cherche `ln[...]` séparément, plutôt que de figer leur ordre/présence dans le regex
-# principal (une nouvelle combinaison — ex. `hl[...] title[...]` sans `ln[]` — a fait échouer une
-# première version qui supposait `ln` avant `hl`).
-CODE_SNIPPET = re.compile(r"\{\*\s*(?:\.\./)*docs_src/(\S+?)((?:\s+\w+\[[^\]]*\])*)\s*\*\}")
+# On résout <chemin> depuis la racine du dépôt plutôt que de recompter les "../" (dont la profondeur
+# relative au fichier .md ne correspond pas à la macro réelle de FastAPI) : qu'il s'agisse de docs_src/
+# (exemples) ou de fastapi/openapi/ (le framework lui-même), le chemin après le(s) "../" est toujours
+# relatif à la racine du dépôt. Les attributs sont capturés en bloc (`attrs`) puis on y cherche `ln[...]`
+# séparément, plutôt que de figer leur ordre/présence dans le regex principal (une combinaison — ex.
+# `hl[...] title[...]` sans `ln[]` — a fait échouer une première version qui supposait `ln` avant `hl`).
+CODE_SNIPPET = re.compile(r"\{\*\s*(?:\.\./)+(\S+?)((?:\s+\w+\[[^\]]*\])*)\s*\*\}")
 LN_ATTR = re.compile(r"\bln\[([^\]]+)\]")
 
 
@@ -64,12 +64,12 @@ def _parse_line_ranges(spec: str) -> list[tuple[int, int]]:
 
 
 def resolve_code_snippets(text: str, repo_root: Path) -> str:
-    """Remplace chaque directive `{* docs_src/... *}` par le code réel, lu dans le dépôt cloné."""
+    """Remplace chaque directive `{* <chemin depuis la racine du dépôt>.py ... *}` par le code réel."""
     def repl(m):
         rel_path, attrs = m.group(1), m.group(2)
         ln_match = LN_ATTR.search(attrs)
         ln_spec = ln_match.group(1) if ln_match else None
-        target = repo_root / "docs_src" / rel_path
+        target = repo_root / rel_path
         if not target.exists():
             return m.group(0)  # fichier introuvable (sparse-checkout incomplet) : laisser visible, pas silencieux
         lines = target.read_text(encoding="utf-8").splitlines()

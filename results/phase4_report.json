@@ -76,7 +76,7 @@
     "n_answerable": 42,
     "n_refused": 2,
     "n_errors": 0,
-    "mean_faithfulness": 0.9513974781831924,
+    "mean_faithfulness": 0.9486725245653818,
     "cases": [
       {
         "id": "q01",
@@ -89,31 +89,31 @@
         "faithfulness": 0.5714285714285714,
         "claims": [
           {
-            "claim": "Background tasks can be defined to run after returning a response",
+            "claim": "You can define background tasks to be run after returning a response",
             "supported": true
           },
           {
-            "claim": "Background tasks are useful for operations that need to happen after a request but the client doesn't have to wait for before receiving the response",
+            "claim": "Background tasks are useful for operations that need to happen after a request but that the client doesn't need to wait for before receiving the response",
             "supported": true
           },
           {
-            "claim": "Sending email notifications is an example of a background task use case",
+            "claim": "Examples of background tasks include sending email notifications or processing data in the background",
             "supported": true
           },
           {
-            "claim": "Processing data in the background is an example of a background task use case",
+            "claim": "You can use dependencies with `yield` statements",
             "supported": true
           },
           {
-            "claim": "Dependencies with `yield` can be used to run code after sending a response to the client",
+            "claim": "Code after the `yield` statement in a dependency will execute after the response is sent to the client",
             "supported": false
           },
           {
-            "claim": "Code after the `yield` statement executes after the response is sent to the client",
+            "claim": "Dependencies with `yield` are useful for cleanup operations like closing database sessions or releasing resources",
             "supported": false
           },
           {
-            "claim": "After the path operation returns a response to the client, any background tasks are sent, and then the exit code of dependencies with `yield` runs after the response is completely sent",
+            "claim": "After the response is sent to the client, background tasks are executed, and then any cleanup code in dependencies with `yield` runs afterward",
             "supported": false
           }
         ]
@@ -124,41 +124,45 @@
         "answerable": true,
         "citations": [
           "fastapi/tutorial/handling-errors.md#(introduction)",
-          "fastapi/tutorial/response-status-code.md#About HTTP status codes",
-          "fastapi/tutorial/handling-errors.md#Raise an `HTTPException` in your code"
+          "fastapi/tutorial/handling-errors.md#Raise an `HTTPException` in your code",
+          "fastapi/tutorial/response-status-code.md#About HTTP status codes"
         ],
-        "faithfulness": 0.625,
+        "faithfulness": 0.6666666666666666,
         "claims": [
           {
-            "claim": "To return an error to the client with a specific status code, raise an `HTTPException` with the desired status code and detail message.",
+            "claim": "To return an error to the client with a specific status code in FastAPI, you raise an HTTPException with the desired status code and error details",
             "supported": true
           },
           {
-            "claim": "`400 - 499` range is for client errors",
+            "claim": "HTTPException is a Python exception with additional data relevant for APIs",
             "supported": true
           },
           {
-            "claim": "`404` is for \"Not Found\"",
+            "claim": "When raised, HTTPException terminates the request immediately and sends the HTTP error to the client",
             "supported": true
           },
           {
-            "claim": "`403` is for \"Forbidden\"",
+            "claim": "You can pass any JSON-convertible value (string, dict, list, etc.) as the detail parameter",
             "supported": false
           },
           {
-            "claim": "`401` is for \"Unauthorized\"",
+            "claim": "HTTP status codes typically in the 400-499 range are used for client errors",
+            "supported": true
+          },
+          {
+            "claim": "404 is used for 'Not Found'",
+            "supported": true
+          },
+          {
+            "claim": "400 is used for generic errors",
+            "supported": true
+          },
+          {
+            "claim": "401 is used for authentication failures",
             "supported": false
           },
           {
-            "claim": "`500 - 599` range is for server errors",
-            "supported": true
-          },
-          {
-            "claim": "When you raise an `HTTPException`, it terminates the request immediately and sends the HTTP error to the client.",
-            "supported": true
-          },
-          {
-            "claim": "You can pass any JSON-convertible value as the `detail` parameter, not just strings (e.g., dict, list).",
+            "claim": "403 is used for permission issues",
             "supported": false
           }
         ]
@@ -168,66 +172,54 @@
         "query": "change how validation errors are returned",
         "answerable": true,
         "citations": [
+          "pydantic/concepts/unions.md#Union Validation Errors",
           "fastapi/tutorial/handling-errors.md#Override request validation exceptions",
-          "pydantic/errors/errors.md#(introduction)",
-          "pydantic/concepts/unions.md#Union Validation Errors"
+          "pydantic/errors/errors.md#(introduction)"
         ],
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "You can use @app.exception_handler(RequestValidationError) to decorate a custom exception handler in FastAPI",
+            "claim": "You can customize the error type, message, and context by passing parameters to the `Discriminator` constructor",
             "supported": true
           },
           {
-            "claim": "The exception handler receives the Request and exception",
+            "claim": "`custom_error_type` sets the `type` attribute of the `ValidationError`",
             "supported": true
           },
           {
-            "claim": "The custom exception handler allows you to format and return errors in a custom way",
+            "claim": "`custom_error_message` sets the `msg` attribute of the `ValidationError`",
             "supported": true
           },
           {
-            "claim": "ValidationError has an errors() method that returns a list of ErrorDetails objects",
+            "claim": "`custom_error_context` sets the `ctx` attribute of the `ValidationError`",
             "supported": true
           },
           {
-            "claim": "ValidationError has an error_count() method that returns the number of errors",
+            "claim": "You can override request validation exceptions by importing `RequestValidationError`",
             "supported": true
           },
           {
-            "claim": "ValidationError has a json() method that returns a JSON representation of errors",
+            "claim": "You can use `@app.exception_handler(RequestValidationError)` to decorate a custom exception handler",
             "supported": true
           },
           {
-            "claim": "str(e) on a ValidationError returns a human-readable representation",
+            "claim": "`errors()` returns a list of `ErrorDetails` objects",
             "supported": true
           },
           {
-            "claim": "You can pass custom_error_type to the Discriminator constructor",
+            "claim": "`error_count()` returns the number of errors",
             "supported": true
           },
           {
-            "claim": "custom_error_type sets the type attribute of the ValidationError",
+            "claim": "`json()` returns a JSON representation of errors",
             "supported": true
           },
           {
-            "claim": "You can pass custom_error_message to the Discriminator constructor",
+            "claim": "`str(e)` returns a human-readable representation",
             "supported": true
           },
           {
-            "claim": "custom_error_message sets the msg attribute of the ValidationError",
-            "supported": true
-          },
-          {
-            "claim": "You can pass custom_error_context to the Discriminator constructor",
-            "supported": true
-          },
-          {
-            "claim": "custom_error_context sets the ctx attribute of the ValidationError",
-            "supported": true
-          },
-          {
-            "claim": "You can use Tags to label union cases to simplify error messages",
+            "claim": "Each `ErrorDetails` object contains: `ctx`, `input`, `loc`, `msg`, `type`, and `url` properties",
             "supported": true
           }
         ]
@@ -240,62 +232,42 @@
           "fastapi/tutorial/cors.md#Steps",
           "starlette/middleware.md#CORSMiddleware"
         ],
-        "faithfulness": 1.0,
+        "faithfulness": 0.8888888888888888,
         "claims": [
           {
-            "claim": "To allow requests from a frontend running on a different domain, you need to configure CORS on your backend",
+            "claim": "To allow requests from a frontend running on a different domain, you need to configure CORS (Cross-Origin Resource Sharing) on your backend.",
             "supported": true
           },
           {
-            "claim": "The backend must have a list of 'allowed origins' that includes the frontend's domain",
+            "claim": "The backend must have a list of \"allowed origins\" that includes the frontend's domain.",
             "supported": true
           },
           {
-            "claim": "CORSMiddleware adds appropriate CORS headers to outgoing responses",
+            "claim": "You can use CORSMiddleware to add appropriate CORS headers to outgoing responses.",
             "supported": true
           },
           {
-            "claim": "The key configuration parameter is `allow_origins`",
+            "claim": "The key parameter is `allow_origins`, which should be a list of origins permitted to make cross-origin requests.",
             "supported": true
           },
           {
-            "claim": "`allow_origins` accepts a list of origins that should be permitted to make cross-origin requests",
+            "claim": "Example origins for `allow_origins` are `['https://example.org', 'https://www.example.org']`.",
             "supported": true
           },
           {
-            "claim": "You can use `['*']` to allow any origin",
+            "claim": "You can use `['*']` to allow any origin.",
             "supported": true
           },
           {
-            "claim": "You can specify particular origins like `['https://example.org', 'https://www.example.org']`",
+            "claim": "Using `['*']` is less secure.",
+            "supported": false
+          },
+          {
+            "claim": "When a browser makes a cross-origin request, it first sends an HTTP `OPTIONS` request (preflight request) to the backend.",
             "supported": true
           },
           {
-            "claim": "You can use `allow_origin_regex` to match origins against a regex pattern",
-            "supported": true
-          },
-          {
-            "claim": "`allow_methods` is an HTTP methods configuration for cross-origin requests",
-            "supported": true
-          },
-          {
-            "claim": "`allow_methods` defaults to `['GET']`",
-            "supported": true
-          },
-          {
-            "claim": "`allow_headers` is an HTTP request headers configuration for cross-origin requests",
-            "supported": true
-          },
-          {
-            "claim": "`allow_credentials` configures whether to support cookies for cross-origin requests",
-            "supported": true
-          },
-          {
-            "claim": "When a cross-origin request is made, the browser will send an HTTP OPTIONS preflight request",
-            "supported": true
-          },
-          {
-            "claim": "The preflight request is to verify that the backend authorizes communication from that origin",
+            "claim": "If the backend responds with the appropriate CORS headers authorizing the communication from the frontend's origin, then the browser will allow the frontend's JavaScript to send its actual request to the backend.",
             "supported": true
           }
         ]
@@ -319,31 +291,31 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Install python-multipart using 'uv add python-multipart'",
+            "claim": "To upload a file to the server in FastAPI, you need to first install the `python-multipart` package",
             "supported": true
           },
           {
-            "claim": "python-multipart is needed because uploaded files are sent as 'form data'",
+            "claim": "`python-multipart` is required for handling uploaded files sent as form data",
             "supported": true
           },
           {
-            "claim": "File uploads can be defined using the `File` parameter in FastAPI",
+            "claim": "You can install `python-multipart` using `$ uv add python-multipart`",
             "supported": true
           },
           {
-            "claim": "You can make file uploads optional by using type annotations with a default value of `None`",
+            "claim": "You can define a POST endpoint that accepts a file parameter using `bytes` or `UploadFile`",
             "supported": true
           },
           {
-            "claim": "To accept multiple files at once, declare a list of `UploadFile`",
+            "claim": "You can make file uploads optional by setting a default value of `None`",
             "supported": true
           },
           {
-            "claim": "You can use `bytes` instead of `UploadFile` to receive files as bytes",
+            "claim": "For multiple file uploads, you can declare a list of files",
             "supported": true
           },
           {
-            "claim": "You can add descriptions using `File(description=\"...\")`",
+            "claim": "You can add metadata to file uploads using `File(description=\"...`)` in the Annotated type",
             "supported": true
           }
         ]
@@ -355,7 +327,8 @@
         "citations": [
           "fastapi/tutorial/security/oauth2-jwt.md#Handle JWT tokens",
           "fastapi/tutorial/security/oauth2-jwt.md#Hash and verify the passwords",
-          "fastapi/tutorial/security/oauth2-jwt.md#Update the `/token` *path operation*"
+          "fastapi/tutorial/security/oauth2-jwt.md#Update the `/token` *path operation*",
+          "fastapi/tutorial/security/simple-oauth2.md#Return the token"
         ],
         "faithfulness": 1.0,
         "claims": [
@@ -368,11 +341,11 @@
             "supported": true
           },
           {
-            "claim": "Create a utility function to hash passwords with get_password_hash that returns password_hash.hash(password)",
+            "claim": "Use password_hash.hash(password) to hash a password",
             "supported": true
           },
           {
-            "claim": "Create a utility function to verify passwords with verify_password that returns password_hash.verify(plain_password, hashed_password)",
+            "claim": "Use password_hash.verify(plain_password, hashed_password) to verify if a password matches the stored hash",
             "supported": true
           },
           {
@@ -380,11 +353,11 @@
             "supported": true
           },
           {
-            "claim": "Set ALGORITHM to HS256 for signing tokens",
+            "claim": "Set ALGORITHM to HS256",
             "supported": true
           },
           {
-            "claim": "Set ACCESS_TOKEN_EXPIRE_MINUTES to 30 for token expiration",
+            "claim": "Define ACCESS_TOKEN_EXPIRE_MINUTES as 30",
             "supported": true
           },
           {
@@ -392,19 +365,31 @@
             "supported": true
           },
           {
-            "claim": "The create_access_token function copies the input data, adds expiration time using datetime.now(timezone.utc), and encodes with jwt.encode using SECRET_KEY and ALGORITHM",
+            "claim": "Create a create_access_token() function that takes a data dict and optional expires_delta",
             "supported": true
           },
           {
-            "claim": "If expires_delta is provided to create_access_token, it adds it to the current datetime; otherwise it defaults to 15 minutes",
+            "claim": "The create_access_token() function adds expiration time to the token data",
             "supported": true
           },
           {
-            "claim": "In the /token endpoint, create a timedelta with expiration time using ACCESS_TOKEN_EXPIRE_MINUTES",
+            "claim": "The create_access_token() function encodes using jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)",
             "supported": true
           },
           {
-            "claim": "The /token endpoint calls create_access_token with user data and returns it as a Token object",
+            "claim": "The create_access_token() function returns the encoded JWT",
+            "supported": true
+          },
+          {
+            "claim": "In the /token endpoint, create a timedelta with expiration minutes",
+            "supported": true
+          },
+          {
+            "claim": "In the /token endpoint, call create_access_token() to generate the token",
+            "supported": true
+          },
+          {
+            "claim": "Return the token in a Token response with token_type=bearer",
             "supported": true
           }
         ]
@@ -417,35 +402,51 @@
           "fastapi/advanced/events.md#Lifespan",
           "fastapi/advanced/events.md#(introduction)"
         ],
-        "faithfulness": 0.8571428571428571,
+        "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "You can define setup and cleanup logic that runs when your app starts and stops using the `lifespan` parameter of the `FastAPI` app with a context manager",
+            "claim": "You can run setup and cleanup logic when your app starts and stops using the `lifespan` parameter of the FastAPI app",
             "supported": true
           },
           {
-            "claim": "Create an async function decorated with `@asynccontextmanager` that uses `yield` to separate startup and shutdown code",
+            "claim": "You use a context manager with the lifespan parameter",
             "supported": true
           },
           {
-            "claim": "Code before the `yield` executes once before the application starts receiving requests (startup)",
+            "claim": "Create an async function decorated with `@asynccontextmanager`",
             "supported": true
           },
           {
-            "claim": "Code after the `yield` executes once after the application finishes handling requests (shutdown)",
+            "claim": "Startup logic should be placed before the `yield` statement",
             "supported": true
           },
           {
-            "claim": "Pass this function to `FastAPI(lifespan=lifespan)`",
+            "claim": "Cleanup logic should be placed after the `yield` statement",
             "supported": true
           },
           {
-            "claim": "This approach is useful for setting up shared resources like database connection pools or loading machine learning models, and cleaning them up afterwards",
+            "claim": "Pass the function to the `lifespan` parameter when creating your FastAPI app",
             "supported": true
           },
           {
-            "claim": "If you use the `lifespan` parameter, startup and shutdown event handlers will no longer be called",
-            "supported": false
+            "claim": "The startup code executes once before the application starts receiving requests",
+            "supported": true
+          },
+          {
+            "claim": "The cleanup code executes once after the application finishes handling all requests",
+            "supported": true
+          },
+          {
+            "claim": "This is useful for setting up shared resources like database connections",
+            "supported": true
+          },
+          {
+            "claim": "This is useful for loading machine learning models",
+            "supported": true
+          },
+          {
+            "claim": "This is useful for releasing resources when the app stops",
+            "supported": true
           }
         ]
       },
@@ -455,42 +456,58 @@
         "answerable": true,
         "citations": [
           "fastapi/advanced/behind-a-proxy.md#Proxy with a stripped path prefix",
-          "fastapi/advanced/behind-a-proxy.md#Check the docs UI",
+          "fastapi/advanced/behind-a-proxy.md#About proxies with a stripped path prefix",
           "fastapi/advanced/behind-a-proxy.md#Testing locally with Traefik",
           "fastapi/advanced/behind-a-proxy.md#Check the responses"
         ],
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Use the `root_path` configuration option to serve your FastAPI app behind a reverse proxy that strips a path prefix",
+            "claim": "To serve your FastAPI app behind a reverse proxy that strips a path prefix, use the `root_path` configuration option.",
             "supported": true
           },
           {
-            "claim": "`root_path` is an ASGI specification mechanism that tells your application about the path prefix added by the proxy",
+            "claim": "`root_path` is an ASGI mechanism that FastAPI uses via Starlette.",
             "supported": true
           },
           {
-            "claim": "Configure your proxy to strip the path prefix, for example with Traefik, by configuring it to listen on a path like `/api/v1` and strip that prefix before forwarding requests",
+            "claim": "You should configure your proxy to strip the path prefix before forwarding requests to your application.",
             "supported": true
           },
           {
-            "claim": "Start your FastAPI app with the `--root-path` option to tell FastAPI the path prefix it's being served under",
+            "claim": "You start your FastAPI app with the `--root-path` option matching the stripped prefix.",
             "supported": true
           },
           {
-            "claim": "The `--root-path` setting ensures the docs UI and OpenAPI schema reflect the actual proxy URL",
+            "claim": "With a proxy listening on `http://0.0.0.0:9999/api/v1/app` that strips the `/api/v1` prefix, requests are forwarded to your Uvicorn server at `http://127.0.0.1:8000/app`.",
             "supported": true
           },
           {
-            "claim": "The official access point is through the proxy at the full path (e.g., `http://127.0.0.1:9999/api/v1/docs`), not directly at the server address",
+            "claim": "Your application code remains unchanged\u2014it still declares paths like `/app` without the prefix.",
             "supported": true
           },
           {
-            "claim": "The proxy listens on the full path with the prefix (e.g., `http://0.0.0.0:9999/api/v1/app`), strips the `/api/v1` part, and forwards requests to your server at `http://127.0.0.1:8000/app`",
+            "claim": "The `root_path` tells FastAPI that the application is being served under `/api/v1`.",
             "supported": true
           },
           {
-            "claim": "Your code only references `/app` while the `root_path` setting ensures the docs UI and OpenAPI schema reflect the actual proxy URL",
+            "claim": "FastAPI uses `root_path` to generate the correct OpenAPI schema with the server URL.",
+            "supported": true
+          },
+          {
+            "claim": "FastAPI uses `root_path` to ensure the docs UI (`/docs`) fetches the OpenAPI schema from the correct location.",
+            "supported": true
+          },
+          {
+            "claim": "With Traefik, you configure `routes.toml` to use `stripPrefix` middleware with `prefixes = [\"/api/v1\"]`.",
+            "supported": true
+          },
+          {
+            "claim": "With Traefik, you point to your Uvicorn server at `http://127.0.0.1:8000`.",
+            "supported": true
+          },
+          {
+            "claim": "You then start FastAPI with `--root-path /api/v1`.",
             "supported": true
           }
         ]
@@ -504,54 +521,50 @@
           "fastapi/advanced/websockets.md#Handling disconnections and multiple clients",
           "starlette/websockets.md#Sending data"
         ],
-        "faithfulness": 0.9166666666666666,
+        "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "WebSockets provide a persistent connection that allows both the server and client to send and receive messages",
+            "claim": "To send live messages to the browser over a persistent two-way connection, use WebSockets in FastAPI",
             "supported": true
           },
           {
-            "claim": "You can create a WebSocket route using @app.websocket(\"/ws\") decorator",
+            "claim": "In your WebSocket route, you can `await` for messages and send messages using the `WebSocket` object",
             "supported": true
           },
           {
-            "claim": "You accept the connection with await websocket.accept()",
+            "claim": "Use the `@app.websocket()` decorator to define a WebSocket endpoint",
             "supported": true
           },
           {
-            "claim": "You can receive messages with await websocket.receive_text()",
+            "claim": "Call `await websocket.accept()` to accept the connection",
             "supported": true
           },
           {
-            "claim": "You can receive messages with receive_bytes()",
+            "claim": "Use `await websocket.receive_text()` to receive messages from the client",
             "supported": true
           },
           {
-            "claim": "You can receive messages with receive_json()",
-            "supported": false
-          },
-          {
-            "claim": "await websocket.send_text(data) is used for text data",
+            "claim": "Use `await websocket.send_text()` to send messages to the client",
             "supported": true
           },
           {
-            "claim": "await websocket.send_bytes(data) is used for binary data",
+            "claim": "`await websocket.send_text(data)` is for text data",
             "supported": true
           },
           {
-            "claim": "await websocket.send_json(data) is used for JSON data",
+            "claim": "`await websocket.send_bytes(data)` is for binary data",
             "supported": true
           },
           {
-            "claim": "You can use a ConnectionManager class to track active connections",
+            "claim": "`await websocket.send_json(data)` is for JSON data",
             "supported": true
           },
           {
-            "claim": "ConnectionManager can send messages to specific clients or broadcast to all clients",
+            "claim": "For broadcasting to multiple clients, you can create a `ConnectionManager` class that maintains a list of active WebSocket connections and sends messages to all of them",
             "supported": true
           },
           {
-            "claim": "The WebSocketDisconnect exception is raised when a connection closes",
+            "claim": "Handle disconnections by catching the `WebSocketDisconnect` exception that is raised when a connection closes",
             "supported": true
           }
         ]
@@ -568,31 +581,43 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "The `response_model` is a parameter used in path operation decorators to define the response model for an API endpoint",
+            "claim": "A response model in FastAPI is defined using the `response_model` parameter in a path operation decorator",
             "supported": true
           },
           {
-            "claim": "It ensures private data is filtered out",
+            "claim": "Response models are used to specify what data should be returned from an API endpoint",
             "supported": true
           },
           {
-            "claim": "It takes priority over return type annotations when both are declared",
+            "claim": "Response models ensure sensitive or private data is excluded from responses",
             "supported": true
           },
           {
-            "claim": "This allows you to add correct type annotations for editor and tooling support while still having FastAPI perform data validation and documentation using the response_model",
+            "claim": "Use `response_model_exclude_unset` to return only values that were explicitly set",
             "supported": true
           },
           {
-            "claim": "It generates JSON Schema for both input and output models in the automatic API documentation",
+            "claim": "FastAPI uses the response model for data validation and automatic API documentation",
             "supported": true
           },
           {
-            "claim": "You can use `response_model_exclude_unset` to return only explicitly set values",
+            "claim": "If both a return type and `response_model` are declared, the `response_model` takes priority and will be used by FastAPI",
             "supported": true
           },
           {
-            "claim": "You can set `response_model=None` to disable creating a response model for a path operation",
+            "claim": "The `response_model` can differ from the return type annotation, allowing correct type hints for editors and mypy while having FastAPI use a different model for validation and documentation",
+            "supported": true
+          },
+          {
+            "claim": "Use `response_model=None` to disable creating a response model for a specific path operation",
+            "supported": true
+          },
+          {
+            "claim": "This is useful when returning non-Pydantic types",
+            "supported": true
+          },
+          {
+            "claim": "Both the input and output models appear in the automatic API documentation with their own JSON schemas",
             "supported": true
           }
         ]
@@ -606,51 +631,71 @@
           "fastapi/features.md#Dependency Injection",
           "fastapi/tutorial/dependencies/index.md#Simple and Powerful"
         ],
-        "faithfulness": 0.9090909090909091,
+        "faithfulness": 0.8125,
         "claims": [
           {
-            "claim": "Dependency Injection is a programming pattern where your code (such as path operation functions) declares things it requires to work, and the system (FastAPI) automatically provides those dependencies.",
+            "claim": "Dependency Injection is a programming pattern where your code declares things it requires to work",
             "supported": true
           },
           {
-            "claim": "This approach is useful for sharing logic and code reuse.",
+            "claim": "The system automatically provides those needed dependencies",
             "supported": true
           },
           {
-            "claim": "This approach is useful for sharing database connections.",
+            "claim": "It is useful for sharing logic",
             "supported": true
           },
           {
-            "claim": "This approach is useful for enforcing security and authentication.",
+            "claim": "It is useful for sharing database connections",
             "supported": true
           },
           {
-            "claim": "This approach minimizes code repetition.",
+            "claim": "It is useful for enforcing security and authentication",
             "supported": true
           },
           {
-            "claim": "FastAPI's Dependency Injection system is simple to use but extremely powerful.",
+            "claim": "It is useful for minimizing code repetition",
             "supported": true
           },
           {
-            "claim": "It supports hierarchical dependency structures where dependencies can have their own dependencies.",
+            "claim": "FastAPI's Dependency Injection system is simple to use but extremely powerful",
             "supported": true
           },
           {
-            "claim": "Dependencies automatically create a 'graph' or tree of dependencies that the framework resolves and injects automatically.",
+            "claim": "Dependencies can have their own dependencies, creating a graph or tree structure",
             "supported": true
           },
           {
-            "claim": "The system validates parameters.",
+            "claim": "This hierarchical structure is automatically handled by the framework",
             "supported": true
           },
           {
-            "claim": "The system supports complex authentication and database connections.",
+            "claim": "All dependencies can require data from requests",
             "supported": true
           },
           {
-            "claim": "The system is compatible with all relational databases, NoSQL databases, external packages, APIs, and authentication systems.",
+            "claim": "Dependencies provide automatic validation",
+            "supported": true
+          },
+          {
+            "claim": "Dependencies augment path operation constraints and documentation",
+            "supported": true
+          },
+          {
+            "claim": "FastAPI's dependency injection system is compatible with relational databases",
             "supported": false
+          },
+          {
+            "claim": "FastAPI's dependency injection system is compatible with NoSQL databases",
+            "supported": false
+          },
+          {
+            "claim": "FastAPI's dependency injection system is compatible with external packages and APIs",
+            "supported": false
+          },
+          {
+            "claim": "FastAPI's dependency injection system is compatible with authentication systems",
+            "supported": true
           }
         ]
       },
@@ -664,58 +709,62 @@
           "pydantic/concepts/validators.md#Validation info",
           "pydantic/errors/usage_errors.md#Invalid decorator fields"
         ],
-        "faithfulness": 1.0,
+        "faithfulness": 0.7142857142857143,
         "claims": [
           {
-            "claim": "Field validators are custom validators that you can use at the field level to enforce complex constraints and ensure data integrity in Pydantic models",
+            "claim": "Field validators are custom validators in Pydantic that enforce constraints at the field level.",
             "supported": true
           },
           {
-            "claim": "There are four types of field validators: field after validators, field before validators, field plain validators, and field wrap validators",
+            "claim": "Field validators come in several types: field after validators, field before validators, field plain validators, and field wrap validators.",
             "supported": true
           },
           {
-            "claim": "Field after validators validate after the field value is parsed",
+            "claim": "Field after validators validate after the field value is parsed.",
+            "supported": false
+          },
+          {
+            "claim": "Field before validators validate before the field value is parsed.",
+            "supported": false
+          },
+          {
+            "claim": "Field plain validators are a plain validation mode.",
+            "supported": false
+          },
+          {
+            "claim": "Field wrap validators are a wrap validation mode.",
+            "supported": false
+          },
+          {
+            "claim": "Field validators are defined using the `@field_validator` decorator.",
             "supported": true
           },
           {
-            "claim": "Field before validators validate before the field value is parsed",
+            "claim": "Field validators can access already validated data through the `ValidationInfo.data` property.",
             "supported": true
           },
           {
-            "claim": "Field plain validators are basic field validation",
+            "claim": "Field validators can optionally accept a `ValidationInfo` argument to access additional context.",
             "supported": true
           },
           {
-            "claim": "Field wrap validators wrap around field validation",
+            "claim": "The `ValidationInfo` argument provides access to previously validated fields.",
             "supported": true
           },
           {
-            "claim": "Field validators are defined using the @field_validator decorator",
+            "claim": "The `ValidationInfo` argument provides access to user-defined context.",
             "supported": true
           },
           {
-            "claim": "Field validators are applied to specific fields by passing the field name(s) as string arguments to the decorator",
+            "claim": "The `ValidationInfo` argument provides access to the current validation mode.",
             "supported": true
           },
           {
-            "claim": "The validator function should be a classmethod",
+            "claim": "When using `@field_validator`, field names should be provided as separate string arguments (not in a list).",
             "supported": true
           },
           {
-            "claim": "Field validators can access already validated data through the ValidationInfo.data property",
-            "supported": true
-          },
-          {
-            "claim": "Field validators receive additional information like the field name, validation mode, and user-defined context through the optional ValidationInfo argument",
-            "supported": true
-          },
-          {
-            "claim": "Validation is performed in the order fields are defined",
-            "supported": true
-          },
-          {
-            "claim": "You must ensure you are not accessing a field that hasn't been validated yet",
+            "claim": "The validator function must have the correct signature, typically including `cls` as the first parameter for classmethods.",
             "supported": true
           }
         ]
@@ -726,45 +775,36 @@
         "answerable": true,
         "citations": [
           "fastapi/tutorial/handling-errors.md#Install custom exception handlers",
-          "fastapi/tutorial/handling-errors.md#Reuse **FastAPI**'s exception handlers",
-          "fastapi/tutorial/handling-errors.md#Override the default exception handlers"
+          "fastapi/tutorial/handling-errors.md#Reuse **FastAPI**'s exception handlers"
         ],
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "You can add custom exception handlers in FastAPI using the `@app.exception_handler()` decorator",
+            "claim": "To create a custom exception handler in FastAPI, use the `@app.exception_handler()` decorator",
             "supported": true
           },
           {
-            "claim": "This allows you to handle specific exceptions globally and return custom responses",
+            "claim": "You need to define your custom exception class",
             "supported": true
           },
           {
-            "claim": "You need to define a custom exception class",
+            "claim": "The handler function should be async",
             "supported": true
           },
           {
-            "claim": "The exception handler function takes `request: Request` and `exc: YourException` as parameters",
+            "claim": "The handler function takes a `Request` and the exception as parameters",
             "supported": true
           },
           {
-            "claim": "The handler should be decorated with `@app.exception_handler(YourException)`",
+            "claim": "The handler function returns a response",
             "supported": true
           },
           {
-            "claim": "You return a response (e.g., JSONResponse) with your custom status code and content",
+            "claim": "You can handle built-in exceptions like `RequestValidationError` or `HTTPException`",
             "supported": true
           },
           {
-            "claim": "You can reuse FastAPI's default exception handlers by importing them from `fastapi.exception_handlers`",
-            "supported": true
-          },
-          {
-            "claim": "You can call the default exception handlers within your custom handler",
-            "supported": true
-          },
-          {
-            "claim": "You can override the default handlers for built-in exceptions like `HTTPException` and `RequestValidationError`",
+            "claim": "You can reuse FastAPI's default exception handlers using `http_exception_handler` and `request_validation_exception_handler` from `fastapi.exception_handlers`",
             "supported": true
           }
         ]
@@ -788,35 +828,35 @@
             "supported": true
           },
           {
-            "claim": "Middleware function takes a `Request` and a `call_next` parameter",
+            "claim": "The middleware function takes a `Request` object and a `call_next` callable",
             "supported": true
           },
           {
-            "claim": "The middleware can execute code before the request reaches the endpoint by running code before calling `await call_next(request)`",
+            "claim": "The example adds a custom header with the time it took to process the request",
             "supported": true
           },
           {
-            "claim": "The middleware can execute code after the response is generated by running code after `await call_next(request)` returns",
+            "claim": "The middleware function receives the request before it's processed by any path operation",
             "supported": true
           },
           {
-            "claim": "The example middleware uses `time.perf_counter()` to measure process time",
+            "claim": "Code can be run before calling `call_next(request)` (before the endpoint)",
             "supported": true
           },
           {
-            "claim": "The example middleware adds an `X-Process-Time` header to the response",
+            "claim": "`call_next(request)` passes the request to the rest of the application",
             "supported": true
           },
           {
-            "claim": "This middleware runs before any path operation receives the request",
+            "claim": "The middleware receives the response generated by the path operation",
             "supported": true
           },
           {
-            "claim": "The middleware processes the request through the endpoint with `call_next(request)`",
+            "claim": "Code can be run after `call_next(request)` returns (after the endpoint)",
             "supported": true
           },
           {
-            "claim": "The middleware modifies the response before returning it",
+            "claim": "The middleware returns the response",
             "supported": true
           }
         ]
@@ -838,31 +878,39 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Pydantic provides the `model_dump()` method to convert a model instance to a dictionary",
+            "claim": "The `model_dump()` method converts Pydantic models to dictionaries",
             "supported": true
           },
           {
-            "claim": "The `model_dump()` method converts the model and nested Pydantic models to a dictionary",
+            "claim": "The `model_dump()` method converts model-like types such as dataclasses to dictionaries",
             "supported": true
           },
           {
-            "claim": "You can use `model_dump(by_alias=True)` to use serialization aliases",
+            "claim": "You can use `by_alias=True` with `model_dump()` to use field aliases",
             "supported": true
           },
           {
-            "claim": "You can use `model_dump(mode='json')` to ensure JSON-compatible types",
+            "claim": "You can use `mode='json'` with `model_dump()` to ensure JSON-compatible types are used",
             "supported": true
           },
           {
-            "claim": "Pydantic provides the `model_dump_json()` method to serialize a model directly to a JSON-encoded string",
+            "claim": "The `model_dump_json()` method serializes the model directly to a JSON-encoded string",
             "supported": true
           },
           {
-            "claim": "The `model_dump_json()` method automatically converts Python values to valid JSON data",
+            "claim": "Pydantic automatically converts Python values to valid JSON data",
             "supported": true
           },
           {
-            "claim": "Both methods support various options for customizing serialization behavior",
+            "claim": "Pydantic supports date/time types for JSON serialization",
+            "supported": true
+          },
+          {
+            "claim": "Pydantic supports UUID objects for JSON serialization",
+            "supported": true
+          },
+          {
+            "claim": "Pydantic supports sets for JSON serialization",
             "supported": true
           }
         ]
@@ -874,34 +922,38 @@
         "citations": [
           "pydantic/concepts/strict_mode.md#(introduction)"
         ],
-        "faithfulness": 0.8571428571428571,
+        "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Strict mode in Pydantic prevents automatic type coercion",
+            "claim": "By default, Pydantic will attempt to coerce values to the desired type",
             "supported": true
           },
           {
-            "claim": "When strict mode is enabled, a string is not accepted as an integer",
+            "claim": "Pydantic will convert the string '123' to the integer 123",
             "supported": true
           },
           {
-            "claim": "With strict mode enabled, passing a string '123' to an integer field raises a validation error",
+            "claim": "When strict mode is enabled, Pydantic will error instead of coercing data",
             "supported": true
           },
           {
-            "claim": "Without strict mode, the string '123' would be coerced to the integer 123",
+            "claim": "When strict mode is enabled, Pydantic will only allow instances of the correct type",
             "supported": true
           },
           {
-            "claim": "Strict mode can be enabled as a validation parameter using model_validate(strict=True)",
+            "claim": "Strict mode can be enabled as a validation parameter using `model_validate()` with `strict=True`",
             "supported": true
           },
           {
-            "claim": "Strict mode can be enabled at the field level using the Field parameter",
-            "supported": false
+            "claim": "Strict mode can be enabled at the field level",
+            "supported": true
           },
           {
-            "claim": "Strict mode can be enabled at the configuration level",
+            "claim": "Strict mode can be enabled at the configuration level with the possibility to override at the field level",
+            "supported": true
+          },
+          {
+            "claim": "When strict mode is enabled, passing a string like '123' for an integer field will raise a ValidationError",
             "supported": true
           }
         ]
@@ -917,23 +969,27 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To pick the right model in a union based on the value of one field, you should use discriminated unions.",
+            "claim": "To pick the right model in a union based on the value of one field, you should use discriminated unions",
             "supported": true
           },
           {
-            "claim": "Set a common field on each model of the union with a Literal type annotation containing one or more values that uniquely identify that model.",
+            "claim": "You should set a common field on each model of the union (for example, `pet_type`) typed as accepting literal values",
             "supported": true
           },
           {
-            "claim": "When defining the union field, use the discriminator parameter of the Field() function and specify the name of the discriminating field.",
+            "claim": "When defining the union type, you should specify the `discriminator` parameter of the `Field()` function with the name of that field",
             "supported": true
           },
           {
-            "claim": "Discriminated unions are more performant and more predictable than untagged unions.",
+            "claim": "Discriminated unions are more performant than untagged unions",
             "supported": true
           },
           {
-            "claim": "Discriminated unions allow you to control which member of the union to validate against based on the discriminator field value.",
+            "claim": "Discriminated unions are more predictable than untagged unions",
+            "supported": true
+          },
+          {
+            "claim": "Discriminated unions allow you to control which member of the union to validate against based on the discriminator field value",
             "supported": true
           }
         ]
@@ -944,33 +1000,28 @@
         "answerable": true,
         "citations": [
           "pydantic/concepts/validation_decorator.md#(introduction)",
-          "pydantic/concepts/validation_decorator.md#Parameter types",
-          "pydantic/concepts/experimental.md#Validation of a callable's arguments"
+          "pydantic/concepts/validation_decorator.md#Parameter types"
         ],
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "The `@validate_call` decorator from Pydantic validates a plain function's arguments at call time",
+            "claim": "You can check the types of a plain function's arguments at call time using Pydantic's @validate_call decorator",
             "supported": true
           },
           {
-            "claim": "This decorator performs validation on the provided arguments of a callable based on the function's type annotations before the function is called",
+            "claim": "The @validate_call decorator allows the arguments passed to a function to be parsed and validated using the function's type annotations before the function is called",
             "supported": true
           },
           {
-            "claim": "Parameter types are inferred from type annotations on the function, or as `Any` if not annotated",
+            "claim": "When an argument doesn't match the expected type, a ValidationError is raised",
             "supported": true
           },
           {
-            "claim": "By default, types are coerced before being passed to the actual function",
+            "claim": "By default, Pydantic will attempt to coerce types (e.g., converting a string to a date)",
             "supported": true
           },
           {
-            "claim": "If validation fails, a `ValidationError` is raised",
-            "supported": true
-          },
-          {
-            "claim": "For more advanced use cases where you want to validate arguments without actually calling the function, you can use the experimental `generate_arguments_schema()` function with a `SchemaValidator`",
+            "claim": "Strict mode can be enabled via custom configuration to disable type coercion",
             "supported": true
           }
         ]
@@ -985,27 +1036,23 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "BaseModel.model_json_schema() returns a jsonable dict of the model's schema",
+            "claim": "To generate JSON schema from a model, use the `model_json_schema()` method on a `BaseModel` class.",
             "supported": true
           },
           {
-            "claim": "TypeAdapter.json_schema() returns a jsonable dict of an adapted type's schema",
+            "claim": "The `model_json_schema()` method returns a jsonable dict representing the JSON schema of the model.",
             "supported": true
           },
           {
-            "claim": "These methods can be used to generate JSON schema from a model",
+            "claim": "You can convert the schema to a JSON string using `json.dumps()`.",
             "supported": true
           },
           {
-            "claim": "These methods return a jsonable dict representing the JSON schema",
+            "claim": "For arbitrary types (not just `BaseModel`), use `TypeAdapter.json_schema()` instead.",
             "supported": true
           },
           {
-            "claim": "The result can be serialized to a JSON string using json.dumps()",
-            "supported": true
-          },
-          {
-            "claim": "This is different from model_dump_json() and dump_json(), which serialize model instances as JSON strings instead",
+            "claim": "`model_json_schema()` is different from `model_dump_json()`, which serializes model instances rather than generating the schema.",
             "supported": true
           }
         ]
@@ -1021,27 +1068,27 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "You can use the `alias` parameter on the `Field()` function to accept a different name for a field in incoming data",
-            "supported": true
-          },
-          {
             "claim": "You can use the `validation_alias` parameter on the `Field()` function to accept a different name for a field in incoming data",
             "supported": true
           },
           {
-            "claim": "The `alias` parameter accepts a different name for both validation and serialization",
+            "claim": "`validation_alias` specifies an alternative name that will be used during validation when receiving data",
             "supported": true
           },
           {
-            "claim": "`validation_alias` uses a different name only for validation (incoming data) but not for serialization",
+            "claim": "Using `validation_alias` keeps the actual field name in your model",
             "supported": true
           },
           {
-            "claim": "When using `validation_alias`, the field name is used for serialization",
+            "claim": "You can use the `alias` parameter, which works for both validation and serialization",
             "supported": true
           },
           {
-            "claim": "The `validation_alias` can be a string, `AliasPath`, or `AliasChoices` instance",
+            "claim": "`validation_alias` can be a `str`, `AliasPath`, or `AliasChoices` instance",
+            "supported": true
+          },
+          {
+            "claim": "The basic `alias` parameter must be a string",
             "supported": true
           }
         ]
@@ -1057,51 +1104,31 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "You can use the `TestClient` class to test FastAPI applications without creating an actual HTTP and socket connection",
+            "claim": "You can use the `TestClient` class from `fastapi.testclient` to test FastAPI applications without creating an actual HTTP and socket connection.",
             "supported": true
           },
           {
-            "claim": "It allows you to communicate directly with the FastAPI code without starting a server",
+            "claim": "It communicates directly with the FastAPI code instead.",
             "supported": true
           },
           {
-            "claim": "You can import it from `fastapi.testclient`",
+            "claim": "You import it with `from fastapi.testclient import TestClient`.",
             "supported": true
           },
           {
-            "claim": "The `TestClient` is built on `httpx2`",
+            "claim": "You create a client instance and make requests against your application.",
             "supported": true
           },
           {
-            "claim": "The `TestClient` exposes the same interface as any other `httpx2` session",
+            "claim": "The `TestClient` is built on the `httpx2` library.",
             "supported": true
           },
           {
-            "claim": "You can use it to make requests against your ASGI application",
+            "claim": "It exposes the same interface as any other `httpx2` session.",
             "supported": true
           },
           {
-            "claim": "You can set headers with the `TestClient`",
-            "supported": true
-          },
-          {
-            "claim": "You can handle authentication with the `TestClient`",
-            "supported": true
-          },
-          {
-            "claim": "You can manage session cookies with the `TestClient`",
-            "supported": true
-          },
-          {
-            "claim": "You can upload files with the `TestClient`",
-            "supported": true
-          },
-          {
-            "claim": "You can set headers on the client for future requests or for each request separately",
-            "supported": true
-          },
-          {
-            "claim": "You can configure it to not raise server exceptions if you want to test error responses",
+            "claim": "It allows you to use standard API features like authentication, session cookies, and file uploads.",
             "supported": true
           }
         ]
@@ -1122,39 +1149,31 @@
             "supported": true
           },
           {
-            "claim": "A Dockerfile should start with a Python base image (e.g., FROM python:3.14)",
+            "claim": "Start with a Python base image (e.g., `FROM python:3.14`)",
             "supported": true
           },
           {
-            "claim": "A Dockerfile should set a working directory (e.g., WORKDIR /code)",
+            "claim": "Set a working directory (e.g., `WORKDIR /code`)",
             "supported": true
           },
           {
-            "claim": "A Dockerfile should copy your requirements file and install dependencies",
+            "claim": "Copy your requirements.txt file and install dependencies",
             "supported": true
           },
           {
-            "claim": "A Dockerfile should copy your application code",
+            "claim": "Copy your application code",
             "supported": true
           },
           {
-            "claim": "A Dockerfile should set the command to run your application using fastapi run",
+            "claim": "Specify the command to run your FastAPI app",
             "supported": true
           },
           {
-            "claim": "The example Dockerfile for a standard FastAPI project structure uses FROM python:3.14, WORKDIR /code, COPY ./requirements.txt /code/requirements.txt, RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt, COPY ./app /code/app, and CMD [\"fastapi\", \"run\", \"app/main.py\", \"--port\", \"80\"]",
+            "claim": "For a single-file application (just `main.py`), adjust the Dockerfile to copy `./main.py /code/` and use `CMD [\"fastapi\", \"run\", \"main.py\", \"--port\", \"80\"]`",
             "supported": true
           },
           {
-            "claim": "For a single-file FastAPI application, you should copy main.py to /code/ and use CMD [\"fastapi\", \"run\", \"main.py\", \"--port\", \"80\"]",
-            "supported": true
-          },
-          {
-            "claim": "A container image is a static package containing all your files, environment variables, and the default command to run",
-            "supported": true
-          },
-          {
-            "claim": "A container is the actual running instance of a container image that executes your FastAPI application",
+            "claim": "The resulting container image is a static package of your application including all files, dependencies, environment variables, and the default command needed to run your FastAPI app",
             "supported": true
           }
         ]
@@ -1168,18 +1187,18 @@
           "fastapi/deployment/server-workers.md#(introduction)",
           "fastapi/deployment/concepts.md#Replication - Processes and Memory"
         ],
-        "faithfulness": 0.875,
+        "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To handle more traffic, you can use multiple worker processes",
+            "claim": "You can use multiple worker processes to handle more traffic by running several processes of the server",
             "supported": true
           },
           {
-            "claim": "If you have more clients than a single process can handle and your server has multiple cores in its CPU, you can run multiple processes of the same application simultaneously",
+            "claim": "If you have more clients than a single process can handle and your server has multiple CPU cores, you can run multiple processes of the same application simultaneously",
             "supported": true
           },
           {
-            "claim": "Requests can be distributed among multiple processes",
+            "claim": "You can distribute all requests among multiple processes",
             "supported": true
           },
           {
@@ -1191,15 +1210,15 @@
             "supported": true
           },
           {
-            "claim": "You can use the `--workers` option to specify replication (the number of processes running)",
-            "supported": false
-          },
-          {
-            "claim": "This allows you to take advantage of multiple cores",
+            "claim": "This approach takes advantage of multiple cores",
             "supported": true
           },
           {
-            "claim": "This allows you to handle more concurrent requests than a single process could manage alone",
+            "claim": "Running multiple worker processes allows you to handle more requests",
+            "supported": true
+          },
+          {
+            "claim": "Multiple worker processes involve replicating the number of processes running on your server",
             "supported": true
           }
         ]
@@ -1210,38 +1229,37 @@
         "answerable": true,
         "citations": [
           "fastapi/tutorial/security/first-steps.md#What it does",
-          "fastapi/tutorial/security/first-steps.md#**FastAPI**'s `OAuth2PasswordBearer`",
-          "fastapi/tutorial/security/simple-oauth2.md#Return the token"
+          "fastapi/tutorial/security/first-steps.md#**FastAPI**'s `OAuth2PasswordBearer`"
         ],
-        "faithfulness": 1.0,
+        "faithfulness": 0.8571428571428571,
         "claims": [
           {
-            "claim": "Create an instance of `OAuth2PasswordBearer` with a `tokenUrl` parameter to protect endpoints",
+            "claim": "To protect an endpoint, you need to create an instance of `OAuth2PasswordBearer` with a `tokenUrl` parameter",
             "supported": true
           },
           {
-            "claim": "Use `OAuth2PasswordBearer` as a dependency in an endpoint with `Depends()`",
+            "claim": "You add the token as a dependency to your endpoint using `Depends(oauth2_scheme)`",
             "supported": true
           },
           {
-            "claim": "`OAuth2PasswordBearer` automatically checks for an `Authorization` header in the request with the format `Bearer <token>`",
+            "claim": "`OAuth2PasswordBearer` looks in the request for an `Authorization` header",
             "supported": true
           },
           {
-            "claim": "If the `Authorization` header is missing or doesn't have the correct format, it will respond with a 401 status code (`UNAUTHORIZED`) directly",
+            "claim": "`OAuth2PasswordBearer` checks if the value is `Bearer ` plus a token",
             "supported": true
           },
           {
-            "claim": "You can create a dependency function that verifies the token and returns the authenticated user",
+            "claim": "`OAuth2PasswordBearer` returns the token as a string if valid",
             "supported": true
           },
           {
-            "claim": "The dependency function can call a token validation function like `fake_decode_token`",
+            "claim": "`OAuth2PasswordBearer` responds with a 401 status code error (`UNAUTHORIZED`) if the header is missing or doesn't have a Bearer token",
             "supported": true
           },
           {
-            "claim": "The dependency function should raise an `HTTPException` with status code `HTTP_401_UNAUTHORIZED` if the user is not authenticated",
-            "supported": true
+            "claim": "You can then validate the token contents further in your endpoint or in a separate dependency function (like `get_current_user`) to ensure the token is legitimate before allowing access",
+            "supported": false
           }
         ]
       },
@@ -1252,38 +1270,22 @@
         "citations": [
           "starlette/threadpool.md#(introduction)"
         ],
-        "faithfulness": 0.625,
+        "faithfulness": 0.5,
         "claims": [
           {
-            "claim": "You should use `async def` for endpoints unless they perform blocking I/O operations.",
+            "claim": "When you create a synchronous endpoint using `def` instead of `async def`, Starlette will run your code in a thread pool to avoid blocking the event loop",
+            "supported": true
+          },
+          {
+            "claim": "This applies to endpoint functions as well as background tasks",
+            "supported": true
+          },
+          {
+            "claim": "`async def` is preferred for better performance in most cases",
             "supported": false
           },
           {
-            "claim": "When you use plain `def` instead of `async def`, Starlette runs the code in a thread pool to avoid blocking the event loop.",
-            "supported": true
-          },
-          {
-            "claim": "The thread pool is used when creating synchronous endpoints with `def`.",
-            "supported": true
-          },
-          {
-            "claim": "The thread pool is used when serving files with `FileResponse`.",
-            "supported": true
-          },
-          {
-            "claim": "The thread pool is used when handling file uploads with `UploadFile`.",
-            "supported": true
-          },
-          {
-            "claim": "The thread pool is used when running synchronous background tasks.",
-            "supported": true
-          },
-          {
-            "claim": "In general, it's better to use `async def` unless your endpoint functions use code that performs blocking I/O.",
-            "supported": false
-          },
-          {
-            "claim": "Blocking I/O includes disk reading/writing or network communications.",
+            "claim": "`async def` is especially preferred for compute-only operations or non-blocking code",
             "supported": false
           }
         ]
@@ -1299,35 +1301,43 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Import `Jinja2Templates` from `fastapi.templating`",
+            "claim": "You need to import `Jinja2Templates` from `fastapi.templating`",
             "supported": true
           },
           {
-            "claim": "Create a `templates` object by instantiating `Jinja2Templates(directory=\"templates\")`, specifying your templates directory",
+            "claim": "You create a `templates` object by instantiating `Jinja2Templates` with a `directory` parameter pointing to your templates folder",
             "supported": true
           },
           {
-            "claim": "In your path operation, declare a `Request` parameter",
+            "claim": "You need to declare a `Request` parameter in your path operation",
             "supported": true
           },
           {
-            "claim": "`templates.TemplateResponse()` accepts a `request` parameter for the request object",
+            "claim": "You use `templates.TemplateResponse()` to render and return the template",
             "supported": true
           },
           {
-            "claim": "`templates.TemplateResponse()` accepts a `name` parameter for the template filename",
+            "claim": "`TemplateResponse()` takes a `request` parameter for the request object",
             "supported": true
           },
           {
-            "claim": "`templates.TemplateResponse()` accepts a `context` parameter with key-value pairs to use in the template",
+            "claim": "`TemplateResponse()` takes a `name` parameter for the template filename",
             "supported": true
           },
           {
-            "claim": "Declaring `response_class=HTMLResponse` makes the docs UI know the response is HTML",
+            "claim": "`TemplateResponse()` takes a `context` parameter which is a dictionary with key-value pairs to be used in the template",
             "supported": true
           },
           {
-            "claim": "Context dictionary values are accessible in Jinja2 templates using template variable syntax like `{{ id }}`",
+            "claim": "You can optionally set `response_class=HTMLResponse` on the path operation decorator",
+            "supported": true
+          },
+          {
+            "claim": "Setting `response_class=HTMLResponse` allows the docs UI to know that the response will be HTML",
+            "supported": true
+          },
+          {
+            "claim": "Context dictionary values are accessible in Jinja2 templates using template variables like `{{ id }}`",
             "supported": true
           }
         ]
@@ -1343,27 +1353,35 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To restrict a numeric path parameter to a range of values in FastAPI, use the `Path` function with comparison operators in an `Annotated` type hint",
+            "claim": "`ge` (greater than or equal) sets a minimum value",
             "supported": true
           },
           {
-            "claim": "`ge` (greater than or equal): `Path(ge=1)` requires the value to be >= 1",
+            "claim": "`le` (less than or equal) sets a maximum value",
             "supported": true
           },
           {
-            "claim": "`le` (less than or equal): `Path(le=1000)` requires the value to be <= 1000",
+            "claim": "`gt` (greater than) sets a minimum value (exclusive)",
             "supported": true
           },
           {
-            "claim": "`gt` (greater than): `Path(gt=0)` requires the value to be > 0",
+            "claim": "`lt` (less than) sets a maximum value (exclusive)",
             "supported": true
           },
           {
-            "claim": "`lt` (less than): `Path(lt=10.5)` requires the value to be < 10.5",
+            "claim": "The `Path` function is used to declare numeric constraints",
             "supported": true
           },
           {
-            "claim": "This example restricts `item_id` to be between 0 and 1000 (inclusive)",
+            "claim": "In the example, `item_id` must be an integer greater than or equal to 0",
+            "supported": true
+          },
+          {
+            "claim": "In the example, `item_id` must be less than or equal to 1000",
+            "supported": true
+          },
+          {
+            "claim": "These constraints work for both `int` and `float` values",
             "supported": true
           }
         ]
@@ -1379,51 +1397,47 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To update only some fields of an existing item without replacing the whole thing, you should use partial updates",
+            "claim": "To update only some fields of an existing item without replacing the whole thing, use partial updates",
             "supported": true
           },
           {
-            "claim": "You should use the `PATCH` HTTP method instead of `PUT`",
+            "claim": "Use `PATCH` instead of `PUT` (though `PUT` can also work with this technique)",
             "supported": true
           },
           {
-            "claim": "`PUT` can also be used with this technique",
+            "claim": "Retrieve the stored data from your database",
             "supported": true
           },
           {
-            "claim": "You should retrieve the stored data for the item",
+            "claim": "Put that data in a Pydantic model",
             "supported": true
           },
           {
-            "claim": "You should create a Pydantic model instance from the stored data",
+            "claim": "Generate a `dict` without default values from the input model using `exclude_unset=True`",
             "supported": true
           },
           {
-            "claim": "You should generate a `dict` from the input model using `exclude_unset=True`",
+            "claim": "`exclude_unset=True` ensures you only update values actually set by the user",
             "supported": true
           },
           {
-            "claim": "`exclude_unset=True` only includes values actually set by the user, not default values",
+            "claim": "Create a copy of the stored model using `.model_copy(update=update_data)` to apply the partial updates",
             "supported": true
           },
           {
-            "claim": "You should create a copy of the stored model using `.model_copy(update=update_data)` to update only the specified fields",
+            "claim": "Convert the updated model using `jsonable_encoder()` before saving to your database",
             "supported": true
           },
           {
-            "claim": "You should convert the updated model to JSON-storable format using `jsonable_encoder()`",
+            "claim": "Save and return the updated model",
             "supported": true
           },
           {
-            "claim": "You should save the data to your database and return the updated model",
+            "claim": "By using `exclude_unset=True`, you only override the fields the client actually sent",
             "supported": true
           },
           {
-            "claim": "Only the fields you send in the request are updated, and existing values are preserved",
-            "supported": true
-          },
-          {
-            "claim": "Using `exclude_unset=True` ensures you don't overwrite stored values with model defaults",
+            "claim": "This preserves all other existing fields with their stored values rather than replacing them with model defaults",
             "supported": true
           }
         ]
@@ -1434,32 +1448,37 @@
         "answerable": true,
         "citations": [
           "fastapi/tutorial/body-nested-models.md#Attributes with lists of submodels",
-          "fastapi/tutorial/body-nested-models.md#Deeply nested models"
+          "fastapi/tutorial/body-nested-models.md#Deeply nested models",
+          "fastapi/tutorial/body-nested-models.md#Bodies of pure lists"
         ],
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "In FastAPI, you can define attributes that are lists of Pydantic submodels using the `list[ModelName]` syntax",
+            "claim": "You can use Pydantic models as subtypes of `list`, `set`, and other collection types to create lists of submodels in FastAPI.",
             "supported": true
           },
           {
-            "claim": "You can create a model with a list of nested models like `images: list[Image] | None = None`",
+            "claim": "You can define a model with a `list[Image]` attribute where `Image` is another Pydantic model.",
             "supported": true
           },
           {
-            "claim": "This allows you to expect JSON bodies containing arrays of objects that match your submodel structure",
+            "claim": "This allows you to structure nested data where a parent model contains a list of child models.",
             "supported": true
           },
           {
-            "claim": "FastAPI will automatically handle conversion, validation, and documentation for these nested lists",
+            "claim": "When you define an attribute like `images: list[Image] | None = None`, FastAPI will expect a JSON body with an array of image objects.",
             "supported": true
           },
           {
-            "claim": "You can define arbitrarily deeply nested models",
+            "claim": "FastAPI automatically handles conversion, validation, documentation, and editor support for these nested list structures.",
             "supported": true
           },
           {
-            "claim": "A model can contain lists of other models that themselves contain lists of submodels",
+            "claim": "You can define arbitrarily deeply nested models, where a model contains a list of items that themselves contain lists of other models.",
+            "supported": true
+          },
+          {
+            "claim": "If the top-level JSON body is a pure array, you can declare the parameter type as `list[ModelName]` directly in the function signature.",
             "supported": true
           }
         ]
@@ -1476,43 +1495,31 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Using Pydantic Settings, you create a Settings class with BaseSettings and configure it to read from a .env file",
+            "claim": "Configuration values can be read from a `.env` file using either Pydantic Settings or Starlette's Config class.",
             "supported": true
           },
           {
-            "claim": "The Pydantic Settings approach uses SettingsConfigDict(env_file=\".env\") to specify the .env file",
+            "claim": "Using Pydantic Settings, you create a `Settings` class that inherits from `BaseSettings`",
             "supported": true
           },
           {
-            "claim": "Using Starlette Config, you use the Config class to read from a .env file",
+            "claim": "You set the `env_file` in `model_config` using Pydantic Settings",
             "supported": true
           },
           {
-            "claim": "Configuration values are read first from an environment variable",
+            "claim": "The example Pydantic Settings class has fields: app_name, admin_email, and items_per_user",
             "supported": true
           },
           {
-            "claim": "Configuration values are read second from the .env file",
+            "claim": "Using Starlette Config, you pass the `.env` filename to the `Config` constructor",
             "supported": true
           },
           {
-            "claim": "Configuration values are read third from the default value given in the config",
+            "claim": "Configuration precedence order is: environment variables, `.env` file values, then default values",
             "supported": true
           },
           {
-            "claim": "If none of those match, an error will be raised",
-            "supported": true
-          },
-          {
-            "claim": "The .env file should contain key-value pairs like DEBUG=True",
-            "supported": true
-          },
-          {
-            "claim": "The .env file should not be committed to source control",
-            "supported": true
-          },
-          {
-            "claim": "The .env file should be added to .gitignore",
+            "claim": "If none of environment variables, `.env` file values, or default values provide a value, an error will be raised",
             "supported": true
           }
         ]
@@ -1523,45 +1530,36 @@
         "answerable": true,
         "citations": [
           "fastapi/advanced/stream-data.md#Use Cases",
-          "starlette/middleware.md#GZipMiddleware",
-          "fastapi/deployment/concepts.md#Memory per Process"
+          "fastapi/advanced/stream-data.md#Simulate a File"
         ],
-        "faithfulness": 0.8888888888888888,
+        "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To send a very large response piece by piece instead of loading it in memory, you can use streaming responses.",
+            "claim": "You can use streaming responses to send a very large response piece by piece instead of loading it all in memory",
             "supported": true
           },
           {
-            "claim": "Streaming is particularly useful for large binary files, where you stream each chunk of data as you read it, without having to read it all into memory at once.",
+            "claim": "This approach is particularly useful for large binary files, where you stream each chunk of data as you read it, without having to read it all into memory at once",
             "supported": true
           },
           {
-            "claim": "You can stream video or audio this way.",
+            "claim": "You can stream video or audio this way",
             "supported": true
           },
           {
-            "claim": "You can use `StreamingResponse` with an async generator function that yields chunks.",
-            "supported": false
-          },
-          {
-            "claim": "When using streaming responses with middleware like `GZipMiddleware`, the middleware compresses and emits output for every chunk the application sends.",
+            "claim": "`io.BytesIO` is a file-like object",
             "supported": true
           },
           {
-            "claim": "Chunks reach the client as they are produced instead of waiting for the compressor's buffer to fill.",
+            "claim": "You can iterate over `io.BytesIO` to consume its contents chunk by chunk",
             "supported": true
           },
           {
-            "claim": "This favors timely delivery over compression ratio.",
+            "claim": "By using a `with` block, you ensure that the file-like object is closed after the generator function finishes",
             "supported": true
           },
           {
-            "claim": "Using streaming avoids the problem where multiple processes would each consume large amounts of memory independently.",
-            "supported": true
-          },
-          {
-            "claim": "With streaming, you read and send data in chunks rather than loading the entire response into memory at once.",
+            "claim": "This approach avoids consuming large amounts of memory since each process only needs to hold a single chunk in memory at a time, rather than the entire response",
             "supported": true
           }
         ]
@@ -1580,51 +1578,43 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To upgrade your project from Pydantic v1 to v2, you should upgrade to the latest Pydantic v2 version",
+            "claim": "Replace `pydantic<2` with `pydantic>=1.10.17` to gain access to the `pydantic.v1` namespace",
             "supported": true
           },
           {
-            "claim": "You can replace imports from `pydantic` with imports from `pydantic.v1` to use the v1 compatibility layer",
+            "claim": "Replace all occurrences of `from pydantic.<module> import <object>` with `from pydantic.v1.<module> import <object>`",
             "supported": true
           },
           {
-            "claim": "You can import `BaseModel` from `pydantic.v1`",
+            "claim": "You can import BaseModel from pydantic.v1",
             "supported": true
           },
           {
-            "claim": "You can import `ModelField` from `pydantic.v1.fields`",
+            "claim": "If you're using FastAPI 0.119.0 to 0.127.x, you can migrate gradually by changing imports to use `pydantic.v1` for all models",
             "supported": true
           },
           {
-            "claim": "If you need to migrate gradually, you can keep both v1 and v2 models in the same app during the transition period",
+            "claim": "You can then migrate your models from Pydantic v1 to v2 in groups, in gradual steps",
             "supported": true
           },
           {
-            "claim": "You can migrate your models from v1 to v2 in groups, step by step",
+            "claim": "Make sure you have tests for your app and run them on continuous integration (CI)",
             "supported": true
           },
           {
-            "claim": "You can try using `bump-pydantic` to automate the migration",
+            "claim": "Consider using `bump-pydantic` tool first, as it may automatically migrate your code in one command",
             "supported": true
           },
           {
-            "claim": "If your tests pass with `bump-pydantic`, you may be done with just one command",
-            "supported": true
-          },
-          {
-            "claim": "You should have tests for your app and run them on continuous integration (CI) to ensure everything works correctly after the upgrade",
-            "supported": true
-          },
-          {
-            "claim": "Gradual migration using both Pydantic v1 and v2 models together only works in FastAPI 0.119.0 to 0.127.x",
-            "supported": true
-          },
-          {
-            "claim": "FastAPI 0.128.0 and later require Pydantic v2 models exclusively",
+            "claim": "FastAPI 0.128.0 and later require Pydantic v2 and no longer support the `pydantic.v1` namespace",
             "supported": true
           },
           {
             "claim": "Pydantic v1 (including `pydantic.v1`) is no longer supported in Python 3.14 and above",
+            "supported": true
+          },
+          {
+            "claim": "The gradual migration using both Pydantic v1 and v2 models in the same app only works in FastAPI 0.119.0 to 0.127.x",
             "supported": true
           }
         ]
@@ -1641,15 +1631,11 @@
         "faithfulness": 0.8333333333333334,
         "claims": [
           {
-            "claim": "Swagger UI theme parameters can be configured in FastAPI by passing a `swagger_ui_parameters` argument when creating the `FastAPI()` app object",
+            "claim": "You can configure Swagger UI theme parameters by passing the `swagger_ui_parameters` argument when creating a FastAPI app",
             "supported": true
           },
           {
-            "claim": "The theme is controlled through the `syntaxHighlight` parameter with a nested `theme` key",
-            "supported": true
-          },
-          {
-            "claim": "You can set the syntax highlighting theme to \"obsidian\" using `swagger_ui_parameters={\"syntaxHighlight\": {\"theme\": \"obsidian\"}}`",
+            "claim": "To change the syntax highlighting theme, you can use the `syntaxHighlight.theme` parameter with a value like 'obsidian'",
             "supported": true
           },
           {
@@ -1657,12 +1643,16 @@
             "supported": true
           },
           {
-            "claim": "You can override any default Swagger UI configuration parameters by passing different values in the `swagger_ui_parameters` dictionary",
+            "claim": "FastAPI converts these configurations to JSON for compatibility with JavaScript",
             "supported": true
           },
           {
-            "claim": "For a complete list of all available Swagger UI parameters, consult the official Swagger UI configuration documentation",
+            "claim": "You can override FastAPI's default configuration parameters by setting different values in the `swagger_ui_parameters` dictionary",
             "supported": false
+          },
+          {
+            "claim": "For a complete list of all available Swagger UI parameters, refer to the official Swagger UI configuration documentation",
+            "supported": true
           }
         ]
       },
@@ -1679,19 +1669,19 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "CORS middleware is available in FastAPI through `CORSMiddleware`",
+            "claim": "CORS (Cross-Origin Resource Sharing) middleware is available in FastAPI for handling cross-origin requests",
             "supported": true
           },
           {
-            "claim": "It can be imported from `fastapi.middleware.cors`",
+            "claim": "CORSMiddleware can be imported from `fastapi.middleware.cors`",
             "supported": true
           },
           {
-            "claim": "It can be imported directly from `fastapi`",
+            "claim": "CORSMiddleware can be imported directly from `fastapi`",
             "supported": true
           },
           {
-            "claim": "You can use `CORSMiddleware` from Starlette",
+            "claim": "CORSMiddleware can be imported from `starlette.middleware.cors`",
             "supported": true
           },
           {
@@ -1699,7 +1689,7 @@
             "supported": true
           },
           {
-            "claim": "The middleware passes simple requests through as normal but includes appropriate CORS headers in the response",
+            "claim": "For simple requests, the middleware passes the request through as normal but includes appropriate CORS headers on the response",
             "supported": true
           },
           {
@@ -1707,19 +1697,15 @@
             "supported": true
           },
           {
-            "claim": "The middleware intercepts preflight requests and responds with appropriate CORS headers",
+            "claim": "For CORS preflight requests, the middleware intercepts the incoming request and responds with appropriate CORS headers",
             "supported": true
           },
           {
-            "claim": "The middleware responds with either a `200` or `400` response for informational purposes",
+            "claim": "For CORS preflight requests, the middleware responds with either a `200` or `400` response for informational purposes",
             "supported": true
           },
           {
-            "claim": "FastAPI provides this middleware as a convenience",
-            "supported": true
-          },
-          {
-            "claim": "The middleware comes directly from Starlette",
+            "claim": "More detailed information about CORS is available in the Mozilla CORS documentation",
             "supported": true
           }
         ]
@@ -1737,31 +1723,35 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "To use predefined values for path parameters in FastAPI, you can use a standard Python `Enum`",
+            "claim": "To use predefined values for path parameters in FastAPI, you can use a standard Python `Enum`.",
             "supported": true
           },
           {
-            "claim": "Create an `Enum` class that inherits from both `str` and `Enum`",
+            "claim": "Create an `Enum` class that inherits from both `str` and `Enum`.",
             "supported": true
           },
           {
-            "claim": "By inheriting from `str`, the API docs will know the values must be strings and render correctly",
+            "claim": "By inheriting from `str`, the API docs will know the values must be strings and render correctly.",
             "supported": true
           },
           {
-            "claim": "Define class attributes with fixed values representing the available valid values",
+            "claim": "Define class attributes with fixed values representing the available valid options.",
             "supported": true
           },
           {
-            "claim": "You can compare enum members using `model_name is ModelName.alexnet`",
+            "claim": "The path parameter value will be an enumeration member.",
             "supported": true
           },
           {
-            "claim": "You can access the actual string value using `model_name.value`",
+            "claim": "You can compare it directly with enumeration members (e.g., `if model_name is ModelName.alexnet:`).",
             "supported": true
           },
           {
-            "claim": "Enum members returned from path operations are automatically converted to their corresponding values before being sent to the client",
+            "claim": "You can access its actual string value using `model_name.value`.",
+            "supported": true
+          },
+          {
+            "claim": "Enum members can be returned from path operations and will be automatically converted to their corresponding string values in JSON responses.",
             "supported": true
           }
         ]
@@ -1779,43 +1769,47 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "OAuth2 scopes are a list of strings separated by spaces that represent specific permissions in the OAuth2 specification",
+            "claim": "OAuth2 scopes are strings without spaces that represent specific permissions in the OAuth2 specification",
             "supported": true
           },
           {
-            "claim": "Each scope is just a string without spaces that declares a specific security permission",
+            "claim": "OAuth2 scopes are used as a fine-grained permission system",
             "supported": true
           },
           {
-            "claim": "Example scopes include `users:read`, `users:write`, `instagram_basic`, or `https://www.googleapis.com/auth/drive`",
+            "claim": "OAuth2 scopes can be integrated directly with FastAPI and OpenAPI",
             "supported": true
           },
           {
-            "claim": "Scopes can contain characters like `:` or be URLs",
+            "claim": "Common examples of OAuth2 scopes include `users:read`, `users:write`, `instagram_basic`, and Google's `https://www.googleapis.com/auth/drive`",
             "supported": true
           },
           {
-            "claim": "In OpenAPI, you can define security schemes that use OAuth2 and declare scopes",
+            "claim": "OAuth2 scopes don't have a fixed format and can contain characters like `:` or be URLs",
             "supported": true
           },
           {
-            "claim": "FastAPI integrates OAuth2 scopes seamlessly",
+            "claim": "OAuth2 scopes are just strings from OAuth2's perspective",
             "supported": true
           },
           {
-            "claim": "OAuth2 scopes allow you to implement a fine-grained permission system following the OAuth2 standard in your OpenAPI application and API documentation",
+            "claim": "FastAPI integrates OAuth2 scopes seamlessly into your application and API documentation",
             "supported": true
           },
           {
-            "claim": "OAuth2 with scopes is used by major authentication providers like Facebook, Google, GitHub, Microsoft, and X (Twitter)",
+            "claim": "OAuth2 scopes allow you to manage authentication and authorization following the OAuth2 standard",
             "supported": true
           },
           {
-            "claim": "In FastAPI, you can use `Security` in decorator `dependencies` with scopes",
+            "claim": "Facebook, Google, GitHub, Microsoft, and X (Twitter) use OAuth2 scopes",
             "supported": true
           },
           {
-            "claim": "`SecurityScopes` can be used at any point to verify that a token has the required scopes for a specific path operation",
+            "claim": "You can use `Security` with scopes in decorator dependencies",
+            "supported": true
+          },
+          {
+            "claim": "You can use `SecurityScopes` to verify that tokens have required scopes at any point in your dependency tree",
             "supported": true
           }
         ]
@@ -1833,43 +1827,51 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "HTTPException is a class in FastAPI that you can raise to handle and communicate errors to clients",
+            "claim": "`HTTPException` is a normal Python exception with additional data relevant for APIs",
             "supported": true
           },
           {
-            "claim": "HTTPException is a normal Python exception with additional data relevant for APIs",
+            "claim": "`HTTPException` is imported from FastAPI",
             "supported": true
           },
           {
-            "claim": "HTTPException can be imported from FastAPI using `from fastapi import HTTPException`",
+            "claim": "You `raise` an `HTTPException` (not return it) in your path operation functions or utility functions",
             "supported": true
           },
           {
-            "claim": "You should raise HTTPException, not return it",
+            "claim": "When `HTTPException` is raised, it immediately terminates the request and sends an HTTP error response to the client",
             "supported": true
           },
           {
-            "claim": "HTTPException constructor signature is `HTTPException(status_code, detail=None, headers=None)`",
+            "claim": "`HTTPException` constructor signature is `HTTPException(status_code, detail=None, headers=None)`",
             "supported": true
           },
           {
-            "claim": "When `detail` is not provided, it defaults to the standard phrase for the status code",
+            "claim": "`status_code` is the HTTP status code to return",
             "supported": true
           },
           {
-            "claim": "When raised, HTTPException immediately terminates the current request and sends the HTTP error to the client",
+            "claim": "`detail` is an optional error message that defaults to the standard phrase for the status code, or empty string if none exists",
             "supported": true
           },
           {
-            "claim": "HTTPException should only be raised inside routing or endpoints, not in middleware classes",
+            "claim": "`headers` is an optional parameter for HTTP headers to include in the response",
             "supported": true
           },
           {
-            "claim": "HTTPException can be used on WebSocket endpoints",
+            "claim": "`HTTPException` should only be raised inside routing or endpoints, not in middleware",
             "supported": true
           },
           {
-            "claim": "If HTTPException is raised before `websocket.accept()` on a WebSocket endpoint, the connection won't be upgraded and the proper HTTP response is returned",
+            "claim": "It can be used on WebSocket endpoints",
+            "supported": true
+          },
+          {
+            "claim": "If raised before `websocket.accept()`, the connection is not upgraded and an HTTP response is returned",
+            "supported": true
+          },
+          {
+            "claim": "The `ExceptionMiddleware` converts `HTTPException` instances into plain-text HTTP responses",
             "supported": true
           }
         ]
@@ -1887,59 +1889,43 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "Dependencies with `yield` in FastAPI allow you to perform extra steps after finishing a dependency's primary task.",
+            "claim": "Dependencies with `yield` in FastAPI allow you to perform extra setup and cleanup steps",
             "supported": true
           },
           {
-            "claim": "Instead of using `return`, you use `yield` to return a value, then write cleanup or exit code after the `yield` statement.",
+            "claim": "Instead of using `return`, you use `yield` to provide a value to the path operation or other dependency",
             "supported": true
           },
           {
-            "claim": "Code before and including the `yield` statement executes before creating a response.",
+            "claim": "Code before `yield` executes before creating the response",
             "supported": true
           },
           {
-            "claim": "The yielded value is injected into path operations and other dependencies.",
+            "claim": "The yielded value is injected into path operations and other dependencies",
             "supported": true
           },
           {
-            "claim": "Code after `yield` executes after the response is sent.",
+            "claim": "Code after `yield` executes after the response is sent",
             "supported": true
           },
           {
-            "claim": "Common use cases include managing database sessions - creating a connection before `yield` and closing it after `yield`.",
+            "claim": "You can use `try`/`except` blocks in dependencies with `yield` to catch exceptions thrown during dependency usage",
             "supported": true
           },
           {
-            "claim": "If you use a `try` block in a dependency with `yield`, you'll receive any exception thrown when using the dependency.",
+            "claim": "Use `finally` to ensure cleanup code runs regardless of whether an exception occurred",
             "supported": true
           },
           {
-            "claim": "You can use `except` blocks to handle specific exceptions.",
+            "claim": "You can use either `async` or regular (synchronous) functions",
             "supported": true
           },
           {
-            "claim": "`finally` can be used to ensure exit steps execute regardless of whether an exception occurred.",
+            "claim": "Use `yield` exactly one time per dependency",
             "supported": true
           },
           {
-            "claim": "You can use either `async` or regular functions with `yield`.",
-            "supported": true
-          },
-          {
-            "claim": "FastAPI handles both `async` and regular functions appropriately.",
-            "supported": true
-          },
-          {
-            "claim": "Use `yield` only once per dependency.",
-            "supported": true
-          },
-          {
-            "claim": "Dependencies with `yield` are technically valid because they work with Python's `@contextlib.contextmanager` and `@contextlib.asynccontextmanager` decorators.",
-            "supported": true
-          },
-          {
-            "claim": "FastAPI uses `@contextlib.contextmanager` and `@contextlib.asynccontextmanager` decorators internally.",
+            "claim": "Any function valid with `@contextlib.contextmanager` or `@contextlib.asynccontextmanager` is valid as a FastAPI dependency",
             "supported": true
           }
         ]
@@ -1954,35 +1940,39 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "The `@computed_field` decorator is used to include properties (or cached properties) when serializing a model or dataclass.",
+            "claim": "The `@computed_field` decorator is used to include properties (or cached properties) when serializing a model or dataclass",
             "supported": true
           },
           {
-            "claim": "It allows you to define computed fields that are derived from other fields or represent expensive-to-compute values.",
+            "claim": "It can be applied to properties or cached properties to make them part of the serialized output and JSON schema (in serialization mode)",
             "supported": true
           },
           {
-            "claim": "When a model is serialized, computed fields are included in the output and appear in the JSON Schema in serialization mode.",
+            "claim": "Properties are useful for fields computed from other fields or expensive computations that are cached",
             "supported": true
           },
           {
-            "claim": "Computed fields are marked as read-only in the JSON Schema.",
+            "claim": "Pydantic does not perform additional logic (validation, cache invalidation, etc.) on the wrapped property",
             "supported": true
           },
           {
-            "claim": "You can optionally use the `@property` or `@cached_property` decorators with `@computed_field`.",
+            "claim": "The property will be included in the JSON Schema in serialization mode with `readOnly: True`",
             "supported": true
           },
           {
-            "claim": "The decorator will implicitly convert the method to a property if not explicitly specified.",
+            "claim": "Computed fields can be conditionally excluded from serialization output using the `exclude_if` parameter (as of v2.13)",
             "supported": true
           },
           {
-            "claim": "Computed fields can be conditionally excluded from serialization output by using the `exclude_if` parameter of the decorator.",
+            "claim": "Computed fields can be marked as deprecated using the `@deprecated` decorator",
             "supported": true
           },
           {
-            "claim": "Pydantic does not perform additional logic on the wrapped property such as validation or cache invalidation.",
+            "claim": "It's preferable to explicitly use the `@property` decorator along with `@computed_field` for type checking purposes",
+            "supported": true
+          },
+          {
+            "claim": "When serialized with `model_dump()`, the computed field is included in the output",
             "supported": true
           }
         ]
@@ -1998,83 +1988,75 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "The `model_validator()` decorator is used to perform validation on the entire model's data",
+            "claim": "The `model_validator()` decorator is used to perform validation on the entire model's data.",
             "supported": true
           },
           {
-            "claim": "Three different types of model validators can be used",
+            "claim": "There are three types of model validators.",
             "supported": true
           },
           {
-            "claim": "After validators run after the whole model has been validated",
+            "claim": "After validators run after the whole model has been validated.",
             "supported": true
           },
           {
-            "claim": "After validators are defined as instance methods",
+            "claim": "After validators are defined as instance methods.",
             "supported": true
           },
           {
-            "claim": "After validators can be seen as post-initialization hooks",
+            "claim": "After validators act as post-initialization hooks.",
             "supported": true
           },
           {
-            "claim": "The validated instance should be returned by after validators",
+            "claim": "The validated instance must be returned from after validators.",
             "supported": true
           },
           {
-            "claim": "Before validators run before the model is instantiated",
+            "claim": "Before validators run before the model is instantiated.",
             "supported": true
           },
           {
-            "claim": "Before validators are more flexible than after validators",
+            "claim": "Before validators are more flexible than after validators.",
             "supported": true
           },
           {
-            "claim": "Before validators must deal with raw input, which could be any arbitrary object",
+            "claim": "Before validators must handle raw input which can be any arbitrary object.",
             "supported": true
           },
           {
-            "claim": "Before validators are defined as class methods",
+            "claim": "Before validators should be defined as class methods.",
             "supported": true
           },
           {
-            "claim": "Wrap validators are the most flexible of all",
+            "claim": "Wrap validators are the most flexible type.",
             "supported": true
           },
           {
-            "claim": "Wrap validators allow you to run code before or after Pydantic and other validators process the input data",
+            "claim": "Wrap validators allow you to run code before or after Pydantic and other validators process the input data.",
             "supported": true
           },
           {
-            "claim": "Wrap validators can terminate validation immediately by returning data early or raising an error",
+            "claim": "Wrap validators can terminate validation immediately by returning data early or raising an error.",
             "supported": true
           },
           {
-            "claim": "Both field and model validators can optionally take an extra `ValidationInfo` argument",
+            "claim": "Model validators can optionally take a `ValidationInfo` argument.",
             "supported": true
           },
           {
-            "claim": "`ValidationInfo` provides already validated data",
+            "claim": "`ValidationInfo` provides extra information such as user-defined context.",
             "supported": true
           },
           {
-            "claim": "`ValidationInfo` provides user-defined context",
+            "claim": "`ValidationInfo` provides validation mode information.",
             "supported": true
           },
           {
-            "claim": "`ValidationInfo` provides the current validation mode ('python', 'json', or 'strings')",
+            "claim": "A model validator defined in a base class will be called during validation of a subclass instance.",
             "supported": true
           },
           {
-            "claim": "`ValidationInfo` provides the current field name for field validators",
-            "supported": true
-          },
-          {
-            "claim": "A model validator defined in a base class will be called during validation of a subclass instance",
-            "supported": true
-          },
-          {
-            "claim": "Overriding a model validator in a subclass will override the base class' validator",
+            "claim": "Overriding a model validator in a subclass will override the base class version.",
             "supported": true
           }
         ]
@@ -2093,51 +2075,47 @@
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "TypeAdapter is a Pydantic class that lets you create an object with methods for validating, serializing, and producing JSON schemas for arbitrary types",
+            "claim": "TypeAdapter is a Pydantic class that allows you to create an object with methods for validating, serializing, and producing JSON schemas for arbitrary types.",
             "supported": true
           },
           {
-            "claim": "TypeAdapter serves as a replacement for deprecated utility functions like `parse_obj_as` and `schema_of`",
+            "claim": "TypeAdapter serves as a replacement for the deprecated `parse_obj_as` and `schema_of` utility functions from Pydantic V1.",
             "supported": true
           },
           {
-            "claim": "TypeAdapter covers some use cases of 'root' models",
+            "claim": "TypeAdapter can validate and serialize non-BaseModel types.",
             "supported": true
           },
           {
-            "claim": "You can create a TypeAdapter for any type and use it to validate and serialize data",
+            "claim": "Each instantiation of TypeAdapter constructs new validators and serializers.",
             "supported": true
           },
           {
-            "claim": "TypeAdapter should be instantiated once and reused rather than creating a new instance each time it's needed",
+            "claim": "It is recommended to instantiate TypeAdapter once and reuse it rather than creating a new instance each time it's needed.",
             "supported": true
           },
           {
-            "claim": "Each instantiation of TypeAdapter constructs new validators and serializers",
+            "claim": "TypeAdapter supports configuration through the `config` argument.",
             "supported": true
           },
           {
-            "claim": "TypeAdapter supports configuration through a `config` argument using `ConfigDict`",
+            "claim": "Configuration cannot be provided if the type adapter wraps types that have their own config (BaseModel, TypedDict, or dataclass).",
             "supported": true
           },
           {
-            "claim": "Configuration cannot be provided if the type adapter directly wraps types that have their own config (BaseModel, TypedDict, or dataclass)",
+            "claim": "TypeAdapter supports deferred schema building using `defer_build=True`.",
             "supported": true
           },
           {
-            "claim": "As of v2.10, TypeAdapter supports deferred schema building through the `defer_build` configuration option",
+            "claim": "Deferred schema building delays core schema construction until first use.",
             "supported": true
           },
           {
-            "claim": "Deferred schema building is helpful for types with forward references or expensive core schema builds",
+            "claim": "TypeAdapter provides a `rebuild()` method to manually trigger schema building.",
             "supported": true
           },
           {
-            "claim": "You can manually rebuild the schema using the `rebuild()` method",
-            "supported": true
-          },
-          {
-            "claim": "You may need to explicitly specify generic parameters for proper typing in some scenarios",
+            "claim": "Deferred schema building is useful for types with forward references or expensive schema builds.",
             "supported": true
           }
         ]
@@ -2148,53 +2126,99 @@
         "answerable": true,
         "citations": [
           "fastapi/advanced/middleware.md#`GZipMiddleware`",
+          "fastapi/reference/middleware.md#(introduction)",
           "starlette/middleware.md#GZipMiddleware"
         ],
         "faithfulness": 1.0,
         "claims": [
           {
-            "claim": "GZipMiddleware is a middleware that handles GZip compression of responses for any request that includes \"gzip\" in the Accept-Encoding header",
+            "claim": "GZipMiddleware handles GZip compression of responses for any request that includes 'gzip' in the Accept-Encoding header",
             "supported": true
           },
           {
-            "claim": "It supports both standard and streaming responses",
+            "claim": "It can handle both standard and streaming responses",
             "supported": true
           },
           {
-            "claim": "In FastAPI, GZipMiddleware is imported from fastapi.middleware.gzip",
+            "claim": "It compresses response bodies to reduce file size",
             "supported": true
           },
           {
-            "claim": "minimum_size argument - Do not GZip responses smaller than this size in bytes. Defaults to 500",
+            "claim": "Works with streaming responses, emitting compressed output for each chunk as it's produced",
             "supported": true
           },
           {
-            "claim": "compresslevel argument - Integer from 1 to 9. Defaults to 9. Lower values result in faster compression but larger files; higher values result in slower compression but smaller files",
+            "claim": "Can be imported from `fastapi.middleware.gzip`",
             "supported": true
           },
           {
-            "claim": "thread_minimum_size argument - Compress body chunks at least this large in a worker thread. Defaults to 131072 (128 KiB)",
+            "claim": "`minimum_size`: Do not GZip responses smaller than this value in bytes (default: 500)",
             "supported": true
           },
           {
-            "claim": "exclude_content_types argument - Content types that are never compressed. Defaults to text/event-stream and already-compressed formats",
+            "claim": "`compresslevel`: Integer from 1-9 controlling compression level (default: 9)",
             "supported": true
           },
           {
-            "claim": "The middleware will not GZip responses that already have a Content-Encoding set",
+            "claim": "Lower compresslevel values compress faster but produce larger files",
             "supported": true
           },
           {
-            "claim": "The middleware will not GZip partial content responses (status 206)",
+            "claim": "Higher compresslevel values compress slower but produce smaller files",
             "supported": true
           },
           {
-            "claim": "The middleware will not GZip responses with excluded Content-Type values",
+            "claim": "`thread_minimum_size`: Compress body chunks at least this large in a worker thread to keep the event loop responsive (default: 131072 bytes/128 KiB)",
+            "supported": true
+          },
+          {
+            "claim": "`exclude_content_types`: Content types that are never compressed",
+            "supported": true
+          },
+          {
+            "claim": "Default excluded content types include text/event-stream and already-compressed formats like zip, gzip, images, video, audio, and WOFF fonts",
+            "supported": true
+          },
+          {
+            "claim": "The middleware won't GZip responses that already have Content-Encoding set",
+            "supported": true
+          },
+          {
+            "claim": "The middleware won't GZip partial content responses (status 206)",
+            "supported": true
+          },
+          {
+            "claim": "The middleware won't GZip responses with excluded content types",
             "supported": true
           }
         ]
       }
-    ]
+    ],
+    "manual_review": {
+      "reviewed_by": "Claude (relecture manuelle post-mesure), contre le texte r\u00e9el des passages cit\u00e9s",
+      "date": "2026-09-30",
+      "note": "Deux runs ind\u00e9pendants (avant et apr\u00e8s la r\u00e9solution de la derni\u00e8re directive de code r\u00e9siduelle) : run 1 = 16/392 flagg\u00e9es (score brut 0.951), run 2 = 18/392 flagg\u00e9es (score brut 0.949). Sur les deux runs, la relecture manuelle contre le texte reel des passages cites donne le meme verdict : la quasi-totalite des affirmations flaggees sont de vrais ecarts de grounding strict (un fait vrai sur FastAPI/Pydantic, mais absent du SEUL passage cite pour cette reponse), et AUCUNE des 34 affirmations flaggees au total (16+18) sur les deux runs n'est factuellement fausse. Le meme cas precis (q35, liste des parametres Swagger UI) est une fausse alerte du juge sur les DEUX runs : le passage cite contient explicitement le mecanisme decrit. Conclusion : le score de fidelite est stable a environ 0.01 pres entre deux mesures independantes (0.962 et 0.957 apres correction), malgre la non-determinisme du juge LLM d'un run a l'autre sur QUELLES affirmations precises il flag.",
+      "run_1": {
+        "n_flagged": 16,
+        "genuine": 15,
+        "judge_false_positives": 1,
+        "false_positive_ids": [
+          "q35"
+        ],
+        "raw_score": 0.9592,
+        "corrected_score": 0.9617
+      },
+      "run_2": {
+        "n_flagged": 18,
+        "genuine": 17,
+        "judge_false_positives": 1,
+        "false_positive_ids": [
+          "q35"
+        ],
+        "raw_score": 0.9541,
+        "corrected_score": 0.9566
+      }
+    }
   },
-  "faithfulness_check_s": 59.80613245908171
+  "faithfulness_check_s": 53.30962141696364
 }

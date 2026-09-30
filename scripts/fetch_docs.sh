@@ -20,8 +20,8 @@ fetch() {  # nom  url  sha  dossier(s) à checkout (un ou plusieurs, ex: "docs/e
   echo "$name: $sha"
 }
 
-# fastapi : docs_src/ en plus de docs/en/docs — les pages de doc y référencent des exemples de code réels
-# via une directive {* ../../docs_src/X ln[a:b] *} que build_corpus.py résout (voir resolve_code_snippets).
-fetch fastapi   https://github.com/fastapi/fastapi.git   a3d205bf19640528718cb4f05ab77f4dfca6ad9a docs/en/docs docs_src
+# fastapi : docs_src/ (exemples de code) et fastapi/openapi/ (une directive référence le code source du
+# framework lui-même, pas un exemple) en plus de docs/en/docs — voir build_corpus.py::resolve_code_snippets.
+fetch fastapi   https://github.com/fastapi/fastapi.git   a3d205bf19640528718cb4f05ab77f4dfca6ad9a docs/en/docs docs_src fastapi/openapi
 fetch starlette https://github.com/encode/starlette.git  63c5760d8a672cee96e1e523d84bfa1c77d9ee4c docs
 fetch pydantic  https://github.com/pydantic/pydantic.git bb6da4cfbb1f559885ea2fa207ec93853bfeac64 docs

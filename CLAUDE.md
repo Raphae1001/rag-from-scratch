@@ -6,20 +6,28 @@ Répondre en **français**. Le détail des phases 3 à 6 est dans les PDF de la 
 
 ## État
 - Phase 1 (BM25 from scratch) : **terminée**. Phase 2 (dense pgvector + fusion RRF) : **terminée**, gate atteint et mesuré
-  (recall@10 hybride 0,739 > BM25 0,576, 44 requêtes, `results/phase2_benchmark.md`).
+  (recall@10 hybride 0,739 > BM25 0,576, 44 requêtes, `results/phase2_benchmark.md`). Gain **statistiquement
+  significatif** : IC95% bootstrap de l'écart = [0,087, 0,250], exclut 0 (`scripts/bootstrap_ci.py`,
+  `results/phase2_bootstrap_ci.md`).
 - Phase 3 (génération + garde-fous) : **terminée**, gates mesurés (`results/phase3_report.md`) — 0/12 hallucination
   (parfait), citations vérifiées, reranking mitigé (MRR 0,508→0,556 mieux, recall@10 0,739→0,705 moins bien : le
   cross-encoder remonte mieux la 1re bonne réponse mais fait sortir des docs pertinents du top-10). Documenté
   honnêtement dans le README, pas caché.
-- Phase 4 (évaluation) : **terminée**, mesuré (`results/phase4_report.md`) — 42/44 répondables, fidélité 0,951
-  (borne basse honnête, juge LLM non calibré à la main), 0 erreur de format après correction du prompt sur les
-  requêtes courtes style mot-clé. Les 2 refus restants ont été vérifiés un par un (pas juste comptés) : `q16` =
-  vrai raté de retrieval (limite Phase 1 connue), `q05` = refus correct et défendable (garde-fou qui fonctionne
-  sur une question littéralement ambiguë), voir README section Phase 4.
-- **Correction de corpus post-Phase 4** : 23,3% des documents (37,6% des FastAPI) avaient une directive
-  `{* docs_src/... *}` de FastAPI non résolue (code manquant) — `fetch_docs.sh` ne clonait pas `docs_src/`.
-  Corrigé (`build_corpus.py::resolve_code_snippets`, testé dans `test_build_corpus.py`) ; corpus 1597→1616 docs ;
-  Phases 2/3/4 entièrement re-mesurées après correction (chiffres ci-dessus = après correction).
+- Phase 4 (évaluation) : **terminée**, mesuré (`results/phase4_report.md`) — 42/44 répondables, fidélité
+  **0,957-0,962 calibrée à la main sur deux runs indépendants** (376→377/392 puis 374→375/392 après relecture
+  des affirmations flaggées contre le vrai texte des passages cités : quasi toutes sont de vrais écarts de
+  grounding strict mais AUCUNE n'est factuellement fausse sur les deux runs, 1 était systématiquement une erreur
+  du juge — même cas les deux fois). Score stable à ~0,01 près malgré la non-déterminisme du juge LLM.
+  0 erreur de format après correction du prompt sur les requêtes courtes style mot-clé. Les 2 refus ont été
+  vérifiés un par un (pas juste comptés) : `q16` = vrai raté de retrieval (limite Phase 1 connue), `q05` =
+  refus correct et défendable (garde-fou qui fonctionne sur une question littéralement ambiguë), voir README
+  section Phase 4.
+- **Corrections de corpus post-Phase 4** : (1) 23,3% des documents (37,6% des FastAPI) avaient une directive
+  `{* docs_src/... *}` de FastAPI non résolue (code manquant) — `fetch_docs.sh` ne clonait pas `docs_src/` ;
+  (2) résolveur généralisé pour couvrir aussi une directive référençant le code source de FastAPI lui-même
+  (`fastapi/openapi/`), pas seulement `docs_src/`. Corrigé (`build_corpus.py::resolve_code_snippets`, testé
+  dans `test_build_corpus.py`) ; corpus 1597→1616 docs, **0 directive non résolue** ; Phases 2/3/4 entièrement
+  re-mesurées après chaque correction (chiffres ci-dessus = après correction finale).
 - Phase 5 (API + observabilité) : **terminée**, gates vérifiés — Docker démarre sans intervention manuelle
   (`ensure_embedded.py` charge les embeddings seul), traçage Langfuse **vérifié visuellement dans le vrai
   dashboard** (trace avec les 4 observations attendues, coût/tokens/modèle corrects), latence propre mesurée
@@ -38,7 +46,8 @@ python scripts/phase3_check.py                                 # Phase 3 : gates
 python scripts/phase4_check.py                                 # Phase 4 : fidélité -> results/phase4_report.md
 curl -X POST localhost:8000/query -d '{"query":"..."}'          # Phase 5 : API (besoin de docker compose up)
 python scripts/measure_latency.py                               # Phase 5 : latence -> results/phase5_latency.md
-python -m pytest -q                                             # 136 tests
+python scripts/bootstrap_ci.py                                  # IC bootstrap Phase 2 -> results/phase2_bootstrap_ci.md
+python -m pytest -q                                             # 141 tests
 ```
 
 ## Règles de travail
