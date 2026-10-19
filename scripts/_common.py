@@ -1,4 +1,5 @@
 """Utilitaires partagés par les scripts (chemins, corpus, set d'évaluation, connexion Postgres)."""
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -8,6 +9,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 CORPUS = ROOT / "data" / "corpus.jsonl"
 EVAL = ROOT / "data" / "eval" / "queries.json"
+DEFAULT_EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 def load_corpus() -> list[dict]:
@@ -44,3 +46,19 @@ def safe_generate_answer(client, query: str, passages: list[tuple[str, str]]) ->
         return generate_answer(client, query, passages)
     except ValueError as e:
         return {"answerable": None, "answer": None, "citations": [], "error": str(e)}
+
+
+def make_parser(doc: str | None) -> argparse.ArgumentParser:
+    """Parser commun : la docstring du script devient l'aide, mise en forme telle quelle."""
+    return argparse.ArgumentParser(description=doc, formatter_class=argparse.RawDescriptionHelpFormatter)
+
+
+def add_embedder_args(parser, fake_help: str = "embeddings factices : plomberie seulement, résultats NON valides"):
+    parser.add_argument("--fake", action="store_true", help=fake_help)
+    parser.add_argument("--model", default=DEFAULT_EMBED_MODEL)
+
+
+def build_embedder(args):
+    """HashingEmbedder en mode --fake (aucun modèle téléchargé), sinon le vrai modèle d'embeddings."""
+    from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
+    return HashingEmbedder() if args.fake else SentenceTransformerEmbedder(args.model)
