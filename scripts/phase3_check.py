@@ -4,16 +4,14 @@ Usage :   python scripts/phase3_check.py                 (résultats -> results/
 Plomberie hors ligne (reranking seul, pas de génération) : python scripts/phase3_check.py --fake --pgdata data/pgdata
 Prérequis : scripts/embed_corpus.py déjà exécuté ; $ANTHROPIC_API_KEY dans l'environnement pour la partie génération.
 """
-import argparse
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
-from _common import ROOT, add_db_args, doc_key, get_dsn, load_corpus, safe_generate_answer
+from _common import add_db_args, add_embedder_args, build_embedder, doc_key, get_dsn, load_corpus, make_parser, ROOT, safe_generate_answer
 
 from rag import db
-from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
 from rag.generate import AnthropicClient
 from rag.index import build_index
 from rag.metrics import recall_at_k, reciprocal_rank
@@ -75,11 +73,9 @@ def hallucination_gate(docs, index, conn, embedder, reranker, client, k: int = 5
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     add_db_args(ap)
-    ap.add_argument("--fake", action="store_true",
-                     help="embeddings + reranker + LLM factices : plomberie seulement, résultats NON valides, pas d'appel réseau")
-    ap.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
+    add_embedder_args(ap, "embeddings + reranker + LLM factices : plomberie seulement, résultats NON valides, pas d'appel réseau")
     args = ap.parse_args()
 
     docs = load_corpus()
@@ -87,7 +83,7 @@ def main():
     index = build_index([d["text"] for d in docs])
 
     t0 = time.perf_counter()
-    embedder = HashingEmbedder() if args.fake else SentenceTransformerEmbedder(args.model)
+    embedder = build_embedder(args)
     reranker = OverlapReranker() if args.fake else CrossEncoderReranker()
     conn = db.connect(get_dsn(args))
     n_docs, _ = db.counts(conn)

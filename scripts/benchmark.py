@@ -4,16 +4,14 @@ Prérequis : scripts/embed_corpus.py exécuté avec le modèle réel.
 Usage :   python scripts/benchmark.py            (résultats -> results/phase2_benchmark.{json,md})
 Test de plomberie hors ligne : python scripts/benchmark.py --fake --pgdata data/pgdata
 """
-import argparse
 import json
 import statistics
 import time
 
 import numpy as np
-from _common import ROOT, add_db_args, doc_key, get_dsn, load_corpus, load_eval
+from _common import add_db_args, add_embedder_args, build_embedder, doc_key, get_dsn, load_corpus, load_eval, make_parser, ROOT
 
 from rag import db
-from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
 from rag.index import build_index
 from rag.metrics import precision_at_k, recall_at_k, reciprocal_rank
 from rag.retrieval import search_bm25, search_dense, search_hybrid
@@ -68,16 +66,15 @@ def ann_tradeoff(conn, qvecs: np.ndarray, repeats: int = 20) -> list[dict]:
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     add_db_args(ap)
-    ap.add_argument("--fake", action="store_true", help="embeddings factices : plomberie seulement, résultats NON valides")
-    ap.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
+    add_embedder_args(ap, "embeddings factices : plomberie seulement, résultats NON valides")
     args = ap.parse_args()
 
     docs, queries = load_corpus(), load_eval()
     keys = [doc_key(d) for d in docs]
     assert len(set(keys)) == len(keys), "clés de documents non uniques"
-    embedder = HashingEmbedder() if args.fake else SentenceTransformerEmbedder(args.model)
+    embedder = build_embedder(args)
     conn = db.connect(get_dsn(args))
     n_docs, _ = db.counts(conn)
     assert n_docs == len(docs), "embeddings non chargés : lancer scripts/embed_corpus.py (avec les mêmes options)"

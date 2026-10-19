@@ -7,11 +7,10 @@ mémoire pour ~2750 passages est simple et rapide, et évite de toucher la base 
 
 Usage : python scripts/phase6_check.py [--model models/finetuned-minilm-lora]
 """
-import argparse
 import json
 
 import numpy as np
-from _common import ROOT, doc_key, load_corpus, load_eval
+from _common import doc_key, load_corpus, load_eval, make_parser, ROOT
 
 from rag.bm25 import search as bm25_search
 from rag.chunking import make_chunks
@@ -69,7 +68,7 @@ def evaluate(index, chunk_doc_ids, chunk_vectors, embedder, docs, queries) -> di
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     ap.add_argument("--model", default=str(ROOT / "models" / "finetuned-minilm-lora"))
     args = ap.parse_args()
 

@@ -10,11 +10,10 @@ Usage :
     python scripts/make_training_pairs.py           # génère data/train/pairs.jsonl (une fois)
     python scripts/finetune_embeddings.py            # -> models/finetuned-minilm-lora/
 """
-import argparse
 import json
 from pathlib import Path
 
-from _common import ROOT
+from _common import make_parser, ROOT
 
 PAIRS = ROOT / "data" / "train" / "pairs.jsonl"
 
@@ -45,7 +44,7 @@ def plot_loss(log_history: list[dict], out_path):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     ap.add_argument("--base-model", default="sentence-transformers/all-MiniLM-L6-v2")
     ap.add_argument("--output", default=str(ROOT / "models" / "finetuned-minilm-lora"))
     ap.add_argument("--epochs", type=int, default=3)

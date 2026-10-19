@@ -3,9 +3,8 @@
 Usage : python scripts/answer.py "how do I upload a file to the server"
 Prérequis : scripts/embed_corpus.py déjà exécuté, et $ANTHROPIC_API_KEY dans l'environnement (.env).
 """
-import argparse
 
-from _common import add_db_args, get_dsn, load_corpus
+from _common import add_db_args, get_dsn, load_corpus, make_parser
 
 from rag import db
 from rag.embed import SentenceTransformerEmbedder
@@ -16,7 +15,7 @@ from rag.rerank import CrossEncoderReranker
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     ap.add_argument("query")
     ap.add_argument("-k", type=int, default=5, help="nombre de passages gardés après reranking")
     ap.add_argument("--top-n", type=int, default=20, dest="top_n", help="nombre de résultats hybrides passés au reranker")

@@ -10,15 +10,13 @@ Plomberie hors ligne (pas de génération réelle) : python scripts/phase4_check
 Prérequis : results/phase2_benchmark.json présent ; scripts/embed_corpus.py exécuté ; $ANTHROPIC_API_KEY pour
 la partie fidélité.
 """
-import argparse
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from _common import ROOT, add_db_args, get_dsn, load_corpus, safe_generate_answer
+from _common import add_db_args, add_embedder_args, build_embedder, get_dsn, load_corpus, make_parser, ROOT, safe_generate_answer
 
 from rag import db
-from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
 from rag.faithfulness import judge_faithfulness
 from rag.generate import AnthropicClient
 from rag.index import build_index
@@ -80,11 +78,9 @@ def faithfulness_gate(index, conn, embedder, reranker, client, queries, max_work
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     add_db_args(ap)
-    ap.add_argument("--fake", action="store_true",
-                     help="embeddings + reranker factices, pas de génération réelle : plomberie seulement")
-    ap.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
+    add_embedder_args(ap, "embeddings + reranker factices, pas de génération réelle : plomberie seulement")
     args = ap.parse_args()
 
     if not PHASE2_BENCHMARK.exists():
@@ -94,7 +90,7 @@ def main():
     docs = load_corpus()
     queries = json.loads((ROOT / "data" / "eval" / "queries.json").read_text(encoding="utf-8"))
     index = build_index([d["text"] for d in docs])
-    embedder = HashingEmbedder() if args.fake else SentenceTransformerEmbedder(args.model)
+    embedder = build_embedder(args)
     reranker = OverlapReranker() if args.fake else CrossEncoderReranker()
     conn = db.connect(get_dsn(args))
     n_docs, _ = db.counts(conn)

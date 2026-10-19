@@ -12,11 +12,10 @@ critère" du projet interdit.
 
 Usage : python scripts/make_training_pairs.py [--n 300] [--seed 0]
 """
-import argparse
 import json
 import re
 
-from _common import EVAL, ROOT, load_corpus
+from _common import EVAL, load_corpus, make_parser, ROOT
 
 ANCHOR_SUFFIX = re.compile(r"\s*\{\s*#[^}]*\}\s*$")  # retire l'ancre "{ #id }" du titre de page
 OUT = ROOT / "data" / "train" / "pairs.jsonl"
@@ -44,7 +43,7 @@ def make_pairs(docs: list[dict], excluded_keys: set[str]) -> list[dict]:
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     ap.add_argument("--n", type=int, default=300, help="nombre de paires à échantillonner")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()

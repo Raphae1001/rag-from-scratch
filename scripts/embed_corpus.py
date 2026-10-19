@@ -6,21 +6,18 @@ Usage (avec le modèle réel, Docker démarré) :
 Test hors ligne (embeddings factices, NE PAS utiliser pour évaluer) :
     python scripts/embed_corpus.py --fake --pgdata data/pgdata
 """
-import argparse
 import time
 
-from _common import add_db_args, get_dsn, load_corpus
+from _common import add_db_args, add_embedder_args, build_embedder, get_dsn, load_corpus, make_parser
 
 from rag import db
 from rag.chunking import make_chunks
-from rag.embed import HashingEmbedder, SentenceTransformerEmbedder
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     add_db_args(ap)
-    ap.add_argument("--fake", action="store_true", help="embeddings factices (HashingEmbedder) : plomberie seulement")
-    ap.add_argument("--model", default="sentence-transformers/all-MiniLM-L6-v2")
+    add_embedder_args(ap, "embeddings factices (HashingEmbedder) : plomberie seulement")
     ap.add_argument("--chunk-size", type=int, default=120, help="mots par passage")
     ap.add_argument("--overlap", type=int, default=20, help="mots de chevauchement")
     args = ap.parse_args()
@@ -29,7 +26,7 @@ def main():
     pieces = [(d["id"], i, p) for d in docs for i, p in enumerate(make_chunks(d, args.chunk_size, args.overlap))]
     print(f"{len(docs)} documents -> {len(pieces)} passages ({args.chunk_size} mots, chevauchement {args.overlap})")
 
-    embedder = HashingEmbedder() if args.fake else SentenceTransformerEmbedder(args.model)
+    embedder = build_embedder(args)
     t0 = time.perf_counter()
     vectors = embedder.encode([p for _, _, p in pieces])
     print(f"embeddings : {vectors.shape} en {time.perf_counter() - t0:.1f} s ({'FACTICES' if args.fake else args.model})")

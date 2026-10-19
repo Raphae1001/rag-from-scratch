@@ -7,11 +7,10 @@ tirage, et on prend les percentiles 2,5/97,5 de la distribution obtenue comme IC
 
 Usage : python scripts/bootstrap_ci.py [--n-resamples 10000]
 """
-import argparse
 import json
 
 import numpy as np
-from _common import ROOT, add_db_args, doc_key, get_dsn, load_corpus, load_eval
+from _common import add_db_args, doc_key, get_dsn, load_corpus, load_eval, make_parser, ROOT
 
 from rag import db
 from rag.embed import SentenceTransformerEmbedder
@@ -42,7 +41,7 @@ def bootstrap_ci(values: np.ndarray, n_resamples: int, rng: np.random.Generator)
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = make_parser(__doc__)
     add_db_args(ap)
     ap.add_argument("--n-resamples", type=int, default=10000)
     ap.add_argument("--seed", type=int, default=0, help="graine du générateur aléatoire (reproductibilité)")
